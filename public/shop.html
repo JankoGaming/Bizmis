@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zmajeva Jazbina | Shop</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 4px; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #4F46E5; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #e2e8f0; border-radius: 2px; }
+        .tab-btn.active { color: #4F46E5; border-bottom: 2px solid #4F46E5; background-color: #EEF2FF; }
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3498db; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg"><i class="fa-solid fa-dragon text-xl"></i></div>
+                <span class="text-xl font-bold tracking-tight text-slate-900">Zmajeva<span class="text-indigo-600">Jazbina</span></span>
+            </div>
+            <div class="hidden md:flex space-x-8 font-medium text-sm text-slate-600">
+                <a href="index.html" class="hover:text-indigo-600 transition">Početna</a>
+                <a href="shop.html" class="text-indigo-600">Prodavnica</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative group cursor-pointer">
+                    <i class="fa-solid fa-cart-shopping text-xl text-slate-600 group-hover:text-indigo-600 transition"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 flex-grow">
+        <!-- TABS -->
+        <div class="flex justify-center mb-10 border-b border-slate-200 overflow-x-auto">
+            <button onclick="switchTab('all')" class="tab-btn active px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2 whitespace-nowrap" data-tab="all">
+                <i class="fa-solid fa-layer-group"></i> Sve
+            </button>
+            <button onclick="switchTab('boardgame')" class="tab-btn px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2 whitespace-nowrap" data-tab="boardgame">
+                <i class="fa-solid fa-dice-d20"></i> Društvene Igre
+            </button>
+            <button onclick="switchTab('tcg')" class="tab-btn px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2 whitespace-nowrap" data-tab="tcg">
+                <i class="fa-solid fa-scroll"></i> TCG
+            </button>
+            <button onclick="switchTab('equipment')" class="tab-btn px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2 whitespace-nowrap" data-tab="equipment">
+                <i class="fa-solid fa-shield-halved"></i> Oprema
+            </button>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- SIDEBAR -->
+            <aside class="w-full lg:w-1/4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit lg:sticky lg:top-24">
+                <div class="flex justify-between items-center mb-6 lg:hidden">
+                    <h2 class="font-bold text-lg">Filteri</h2>
+                    <button id="toggle-filters" class="text-indigo-600"><i class="fa-solid fa-chevron-down"></i></button>
+                </div>
+                <div id="filter-container" class="space-y-8 hidden lg:block">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pretraga</label>
+                        <div class="relative">
+                            <input type="text" id="search-input" placeholder="npr. Catan..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Cena (max: <span id="price-val" class="text-indigo-600">25.000</span>)</label>
+                        <input type="range" id="price-range" min="0" max="25000" step="500" value="25000">
+                    </div>
+                    <div>
+                        <h3 class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Broj Igrača</h3>
+                        <div class="space-y-2.5">
+                            <label class="flex items-center space-x-3 cursor-pointer group"><input type="checkbox" class="filter-players rounded border-slate-300 text-indigo-600" value="2"><span class="text-sm text-slate-600">2 Igrača (Duel)</span></label>
+                            <label class="flex items-center space-x-3 cursor-pointer group"><input type="checkbox" class="filter-players rounded border-slate-300 text-indigo-600" value="3-5"><span class="text-sm text-slate-600">3-5 Igrača</span></label>
+                            <label class="flex items-center space-x-3 cursor-pointer group"><input type="checkbox" class="filter-players rounded border-slate-300 text-indigo-600" value="6+"><span class="text-sm text-slate-600">6+ (Party)</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Težina</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition"><input type="checkbox" class="filter-complexity rounded border-slate-300 text-indigo-600" value="lako"><span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">LAKO</span></label>
+                            <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition"><input type="checkbox" class="filter-complexity rounded border-slate-300 text-indigo-600" value="srednje"><span class="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-1 rounded">SREDNJE</span></label>
+                            <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition"><input type="checkbox" class="filter-complexity rounded border-slate-300 text-indigo-600" value="tesko"><span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">TEŠKO</span></label>
+                        </div>
+                    </div>
+                    <button id="reset-filters" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2"><i class="fa-solid fa-rotate-right"></i> Poništi sve</button>
+                </div>
+            </aside>
+
+            <!-- PRODUCT GRID -->
+            <main class="w-full lg:w-3/4">
+                <div class="flex justify-between items-center mb-6">
+                    <p class="text-slate-500 text-sm"><span id="results-count" class="font-bold text-slate-900">0</span> rezultata</p>
+                    <div class="relative">
+                        <select id="sort-select" class="appearance-none bg-white border border-slate-200 pl-4 pr-10 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                            <option value="default">Preporučeno</option>
+                            <option value="price-asc">Cena: Najniža</option>
+                            <option value="price-desc">Cena: Najviša</option>
+                            <option value="rating">Ocena</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3 text-xs text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div id="loader" class="hidden flex justify-center py-20"><div class="loader"></div></div>
+                <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+                <div id="no-results" class="hidden flex flex-col items-center justify-center py-20 text-center"><i class="fa-solid fa-ghost text-4xl text-slate-400 mb-4"></i><h3 class="text-lg font-bold text-slate-700">Nema rezultata</h3></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="product-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white text-slate-500 hover:text-slate-800 rounded-full p-2 transition backdrop-blur-md"><i class="fa-solid fa-xmark text-xl w-6 h-6 flex items-center justify-center"></i></button>
+            <div class="w-full md:w-1/2 bg-slate-50 flex items-center justify-center p-8 relative">
+                <img id="modal-img" src="" referrerpolicy="no-referrer" class="max-h-[50vh] object-contain drop-shadow-xl z-10" onerror="this.src='https://placehold.co/400x400?text=Nema+Slike'">
+            </div>
+            <div class="w-full md:w-1/2 p-8 overflow-y-auto bg-white flex flex-col">
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span id="modal-type" class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-slate-100 text-slate-600">Board Game</span>
+                        <div class="flex items-center text-yellow-400 text-sm bg-yellow-50 px-2 py-1 rounded-full"><i class="fa-solid fa-star mr-1"></i> <span id="modal-rating" class="font-bold text-slate-700">0.0</span></div>
+                    </div>
+                    <h2 id="modal-title" class="text-3xl font-bold text-slate-900 leading-tight">Naslov Igre</h2>
+                    <div class="mt-2 text-2xl font-bold text-indigo-600" id="modal-price">0 RSD</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-users text-xs"></i></div><div><p class="text-[10px] text-slate-400 uppercase font-bold">Igrači</p><p class="text-sm font-semibold text-slate-700" id="modal-players">-</p></div></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-regular fa-clock text-xs"></i></div><div><p class="text-[10px] text-slate-400 uppercase font-bold">Vreme</p><p class="text-sm font-semibold text-slate-700" id="modal-time">-</p></div></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center"><i class="fa-solid fa-child text-xs"></i></div><div><p class="text-[10px] text-slate-400 uppercase font-bold">Uzrast</p><p class="text-sm font-semibold text-slate-700" id="modal-age">-</p></div></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-brain text-xs"></i></div><div><p class="text-[10px] text-slate-400 uppercase font-bold">Težina</p><p class="text-sm font-semibold text-slate-700" id="modal-complexity">-</p></div></div>
+                </div>
+                <div class="prose prose-sm mb-6 text-slate-600"><p id="modal-desc">Opis...</p></div>
+                <div id="modal-video-container" class="mb-6 rounded-xl overflow-hidden shadow-lg hidden"><iframe id="modal-iframe" class="w-full h-48" src="" frameborder="0" allowfullscreen></iframe></div>
+                <div class="mt-auto pt-4 border-t border-slate-100"><button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2" onclick="addToCart()"><i class="fa-solid fa-cart-plus"></i> Dodaj u korpu</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allProducts = [];
+        let currentTab = 'all';
+        let cart = 0;
+        
+        const grid = document.getElementById('product-grid');
+        const loader = document.getElementById('loader');
+        const noResults = document.getElementById('no-results');
+        const countEl = document.getElementById('results-count');
+        
+        async function init() {
+            loader.classList.remove('hidden');
+            grid.innerHTML = '';
+            
+            try {
+                // POZIV KA NAŠEM NODE.JS SERVERU
+                const response = await fetch('/api/games'); 
+                if (!response.ok) throw new Error('Network response was not ok');
+                allProducts = await response.json();
+                
+                loader.classList.add('hidden');
+                filterProducts();
+            } catch (error) {
+                console.error("Greška pri učitavanju:", error);
+                loader.innerHTML = '<p class="text-red-500">Greška pri učitavanju podataka iz baze.</p>';
+            }
+        }
+
+        function renderProducts(list) {
+            grid.innerHTML = '';
+            countEl.innerText = list.length;
+            if (list.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            list.forEach(game => {
+                let badgeClass = 'bg-slate-100 text-slate-600';
+                let complexityLabel = 'N/A';
+                if (game.complexity === 'lako') { badgeClass = 'bg-green-100 text-green-700'; complexityLabel = 'Lako'; }
+                if (game.complexity === 'srednje') { badgeClass = 'bg-yellow-100 text-yellow-700'; complexityLabel = 'Srednje'; }
+                if (game.complexity === 'tesko') { badgeClass = 'bg-red-100 text-red-700'; complexityLabel = 'Teško'; }
+
+                const playersText = (game.players_min === game.players_max) ? (game.players_min || '-') : `${game.players_min}-${game.players_max}`;
+                
+                // Fallback za sliku ako je link pukao
+                const imgUrl = game.image_url || 'https://placehold.co/400x300?text=Nema+Slike';
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-2xl border border-slate-100 overflow-hidden card-hover transition flex flex-col h-full group';
+                card.innerHTML = `
+                    <div class="relative h-56 p-6 flex items-center justify-center bg-slate-50 overflow-hidden cursor-pointer" onclick="openModal(${game.id})">
+                        <img src="${imgUrl}" loading="lazy" class="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-110 drop-shadow-sm" onerror="this.src='https://placehold.co/400x300?text=Nema+Slike'">
+                        <div class="absolute top-3 right-3 flex flex-col gap-2">
+                             ${game.complexity ? `<span class="text-[10px] font-bold uppercase px-2 py-1 rounded-lg ${badgeClass} shadow-sm">${complexityLabel}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md">
+                                ${game.type === 'tcg' ? 'TCG' : (game.type === 'equipment' ? 'Oprema' : 'Board Game')}
+                            </span>
+                            <div class="flex items-center text-yellow-400 text-xs font-bold gap-1"><i class="fa-solid fa-star"></i> ${game.rating || '-'}</div>
+                        </div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-1 leading-snug cursor-pointer hover:text-indigo-600 transition" onclick="openModal(${game.id})">${game.name}</h3>
+                        ${game.type !== 'equipment' ? `
+                        <div class="flex items-center gap-3 text-xs text-slate-500 mb-4 mt-2">
+                            <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-100"><i class="fa-solid fa-users text-slate-400"></i> ${playersText}</div>
+                            <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-100"><i class="fa-regular fa-clock text-slate-400"></i> ${game.playtime_min ? game.playtime_min + 'm' : '-'}</div>
+                        </div>` : '<div class="mb-4"></div>'}
+                        <div class="mt-auto flex justify-between items-end border-t border-dashed border-slate-200 pt-4">
+                            <div><span class="block text-xs text-slate-400">Cena</span><span class="text-xl font-bold text-indigo-600">${parseInt(game.price).toLocaleString()} RSD</span></div>
+                            <button onclick="addToCart(event)" class="bg-slate-100 hover:bg-indigo-600 hover:text-white text-indigo-600 w-10 h-10 rounded-xl flex items-center justify-center transition shadow-sm"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- FILTERI ---
+        const searchInput = document.getElementById('search-input');
+        const priceSlider = document.getElementById('price-range');
+        const priceVal = document.getElementById('price-val');
+        const sortSelect = document.getElementById('sort-select');
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+            filterProducts();
+        }
+
+        function filterProducts() {
+            const term = searchInput.value.toLowerCase();
+            const maxPrice = parseInt(priceSlider.value);
+            const checkedComplexity = Array.from(document.querySelectorAll('.filter-complexity:checked')).map(cb => cb.value);
+            const checkedPlayers = Array.from(document.querySelectorAll('.filter-players:checked')).map(cb => cb.value);
+
+            let filtered = allProducts.filter(item => {
+                if (currentTab !== 'all' && item.type !== currentTab) return false;
+                if (!item.name.toLowerCase().includes(term)) return false;
+                if (item.price > maxPrice) return false;
+                if (checkedComplexity.length > 0 && !checkedComplexity.includes(item.complexity)) return false;
+                
+                if (checkedPlayers.length > 0) {
+                    let match = false;
+                    if (checkedPlayers.includes('2') && item.players_min <= 2 && item.players_max >= 2) match = true;
+                    if (checkedPlayers.includes('3-5') && (item.players_max >= 3 && item.players_min <= 5)) match = true;
+                    if (checkedPlayers.includes('6+') && item.players_max >= 6) match = true;
+                    if (!match) return false;
+                }
+                return true;
+            });
+
+            const sort = sortSelect.value;
+            if (sort === 'price-asc') filtered.sort((a,b) => a.price - b.price);
+            if (sort === 'price-desc') filtered.sort((a,b) => b.price - a.price);
+            if (sort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
+
+            renderProducts(filtered);
+        }
+
+        // --- EVENTS ---
+        searchInput.addEventListener('input', filterProducts);
+        priceSlider.addEventListener('input', (e) => { priceVal.innerText = parseInt(e.target.value).toLocaleString(); filterProducts(); });
+        sortSelect.addEventListener('change', filterProducts);
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', filterProducts));
+        document.getElementById('toggle-filters').addEventListener('click', () => document.getElementById('filter-container').classList.toggle('hidden'));
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            searchInput.value = ''; priceSlider.value = 25000; priceVal.innerText = '25.000';
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            filterProducts();
+        });
+
+        // --- MODAL ---
+        const modal = document.getElementById('product-modal');
+        function openModal(id) {
+            const game = allProducts.find(p => p.id === id);
+            if (!game) return;
+            document.getElementById('modal-img').src = game.image_url || 'https://placehold.co/400x400?text=Nema+Slike';
+            document.getElementById('modal-title').innerText = game.name;
+            document.getElementById('modal-price').innerText = parseInt(game.price).toLocaleString() + ' RSD';
+            document.getElementById('modal-rating').innerText = game.rating;
+            document.getElementById('modal-desc').innerText = game.description;
+            document.getElementById('modal-type').innerText = game.type === 'tcg' ? 'Trading Cards' : 'Board Game';
+            document.getElementById('modal-players').innerText = (game.players_min === game.players_max) ? game.players_min : `${game.players_min}-${game.players_max}`;
+            document.getElementById('modal-time').innerText = game.playtime_min ? `${game.playtime_min} min` : '-';
+            document.getElementById('modal-age').innerText = game.age_min ? `${game.age_min}+` : '-';
+            
+            let compText = '-';
+            if(game.complexity === 'lako') compText = 'Lako';
+            if(game.complexity === 'srednje') compText = 'Srednje';
+            if(game.complexity === 'tesko') compText = 'Teško';
+            document.getElementById('modal-complexity').innerText = compText;
+
+            const vidContainer = document.getElementById('modal-video-container');
+            if (game.video_url) {
+                vidContainer.classList.remove('hidden');
+                document.getElementById('modal-iframe').src = game.video_url;
+            } else {
+                vidContainer.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() { modal.classList.add('hidden'); document.getElementById('modal-iframe').src = ""; }
+        function addToCart(e) { if(e) e.stopPropagation(); cart++; document.getElementById('cart-count').innerText = cart; }
+
+        init();
+    </script>
+    <script src="js/script.js"></script>
+</body>
+</html>

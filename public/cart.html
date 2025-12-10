@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zmajeva Jazbina | Korpa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css"> 
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="text-slate-800 bg-slate-50 flex flex-col min-h-screen">
+
+    <!-- NAVIGACIJA -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg"><i class="fa-solid fa-dragon text-xl"></i></div>
+                <span class="text-xl font-bold tracking-tight text-slate-900">Zmajeva<span class="text-indigo-600">Jazbina</span></span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <a href="shop.html" class="text-slate-600 hover:text-indigo-600 font-medium">Nazad u prodavnicu</a>
+                <div class="relative group">
+                    <i class="fa-solid fa-cart-shopping text-xl text-indigo-600"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="container mx-auto px-4 py-10 flex-grow">
+        <h1 class="text-3xl font-bold mb-8 text-slate-800">Tvoja Korpa</h1>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- LISTA ARTIKALA (OVO JE ELEMENT KOJI JS TRAŽI) -->
+            <div class="w-full lg:w-2/3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                <div id="cart-items-container">
+                    <!-- JS ovde ubacuje artikle -->
+                </div>
+            </div>
+
+            <!-- SUMMARY (TOTAL) -->
+            <div class="w-full lg:w-1/3">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 sticky top-24">
+                    <h3 class="font-bold text-lg mb-4 border-b pb-2">Pregled</h3>
+                    
+                    <div class="flex justify-between mb-2 text-slate-600">
+                        <span>Međuzbir:</span>
+                        <span id="cart-subtotal" class="font-bold">0 RSD</span>
+                    </div>
+                    
+                    <div id="discount-msg" class="hidden flex justify-between mb-4 text-green-600 text-sm">
+                        <span>Popust (10%):</span>
+                        <span>- Primenjen</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xl font-bold text-slate-900 mt-4 pt-4 border-t">
+                        <span>Ukupno:</span>
+                        <span id="cart-total" class="text-indigo-600">0 RSD</span>
+                    </div>
+
+                    <!-- Discount Code -->
+                    <div class="mt-6 mb-4">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Kod za popust</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="discount-code" placeholder="Unesi kod (npr. POPUST10)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button onclick="applyDiscount()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-sm transition">Primeni</button>
+                        </div>
+                    </div>
+
+                    <button onclick="checkout()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform hover:scale-[1.02] mt-2">
+                        Nastavi na plaćanje <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+
+                    <p class="text-center text-xs text-slate-400 mt-4"><i class="fa-solid fa-lock mr-1"></i> Sigurno plaćanje</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="notification-toast" class="fixed bottom-5 right-5 z-[100] transform transition-all duration-300 translate-y-24 opacity-0">
+        <div class="bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-green-400 text-xl"></i>
+            <span id="notification-message" class="font-medium">Poruka</span>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="js/script.js"></script>
+</body>
+</html>

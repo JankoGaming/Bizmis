@@ -45,10 +45,18 @@
                 <a href="#lokacija" class="hover:text-indigo-600 transition">Lokacija</a>
             </div>
 
-            <!-- Dugme Shop -->
-            <a href="shop.html" class="hidden md:inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-white transition-colors duration-200 bg-indigo-600 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg shadow-indigo-200">
-                Kupi Odmah <i class="fa-solid fa-arrow-right ml-2"></i>
-            </a>
+            <!-- Dugme Cart / Shop -->
+            <div class="flex items-center gap-4">
+                 <!-- Korpa Ikonica -->
+                 <a href="cart.html" class="relative group cursor-pointer text-slate-600 hover:text-indigo-600">
+                    <i class="fa-solid fa-cart-shopping text-xl"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">0</span>
+                </a>
+
+                <a href="shop.html" class="hidden md:inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-white transition-colors duration-200 bg-indigo-600 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg shadow-indigo-200">
+                    Kupi Odmah <i class="fa-solid fa-arrow-right ml-2"></i>
+                </a>
+            </div>
 
             <!-- Mobile Menu Button -->
             <button class="md:hidden text-2xl text-slate-700">
@@ -208,9 +216,12 @@
             </div>
         </div>
         <div class="container mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-center text-xs">
-            &copy; 2025 Zmajeva Jazbina. Sva prava zadržana.
+            &copy; 2023 Zmajeva Jazbina. Sva prava zadržana.
         </div>
     </footer>
+    
+    <!-- Link ka skripti -->
+    <script src="js/script.js"></script>
 
 </body>
 </html>

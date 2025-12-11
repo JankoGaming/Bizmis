@@ -8,26 +8,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <!-- Link ka tvom CSS-u -->
     <link rel="stylesheet" href="css/style.css"> 
 
     <style>
         body { font-family: 'Poppins', sans-serif; }
-        .hero-bg {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1610890716171-6b1c9f2c723c?q=80&w=1920&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-        .blob {
-            position: absolute;
-            filter: blur(40px);
-            z-index: -1;
-            opacity: 0.4;
-        }
+        
+        /* Slideshow Styles */
+        .slider-container { position: relative; height: 85vh; overflow: hidden; }
+        .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease-in-out; background-size: cover; background-position: center; }
+        .slide.active { opacity: 1; }
+        .slide-overlay { background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)); position: absolute; inset: 0; }
     </style>
 </head>
-<body class="text-slate-800 bg-slate-50">
+<body class="text-slate-800 bg-slate-50 flex flex-col min-h-screen">
 
     <!-- NAVIGACIJA -->
     <nav class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-slate-100">
@@ -37,153 +30,133 @@
                 <span class="text-xl font-bold tracking-tight text-slate-900">Zmajeva<span class="text-indigo-600">Jazbina</span></span>
             </div>
             
-            <!-- Desktop Meni -->
             <div class="hidden md:flex space-x-8 font-medium text-sm text-slate-600">
                 <a href="index.html" class="text-indigo-600 font-bold">Početna</a>
                 <a href="shop.html" class="hover:text-indigo-600 transition">Prodavnica</a>
-                <a href="#kategorije" class="hover:text-indigo-600 transition">Kategorije</a>
-                <a href="#lokacija" class="hover:text-indigo-600 transition">Lokacija</a>
+                <a href="shop.html?category=akcije" class="text-red-500 font-bold hover:text-red-600 transition"><i class="fa-solid fa-fire mr-1"></i> Akcije</a>
+                <a href="#blog" class="hover:text-indigo-600 transition">Novosti</a>
             </div>
 
-            <!-- Dugme Cart / Shop -->
             <div class="flex items-center gap-4">
-                 <!-- Korpa Ikonica -->
                  <a href="cart.html" class="relative group cursor-pointer text-slate-600 hover:text-indigo-600">
                     <i class="fa-solid fa-cart-shopping text-xl"></i>
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">0</span>
                 </a>
-
-                <a href="shop.html" class="hidden md:inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-white transition-colors duration-200 bg-indigo-600 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg shadow-indigo-200">
-                    Kupi Odmah <i class="fa-solid fa-arrow-right ml-2"></i>
-                </a>
             </div>
-
-            <!-- Mobile Menu Button -->
-            <button class="md:hidden text-2xl text-slate-700">
-                <i class="fa-solid fa-bars"></i>
-            </button>
         </div>
     </nav>
 
-    <!-- HERO SEKCIJA -->
-    <header class="hero-bg h-[85vh] flex items-center justify-center text-center text-white relative overflow-hidden">
-        <div class="container px-4 relative z-10">
-            <span class="inline-block py-1 px-3 rounded-full bg-indigo-500/30 border border-indigo-400/50 backdrop-blur-sm text-indigo-100 text-xs font-bold tracking-widest uppercase mb-4 animate-bounce">Dobrodošli u Jazbinu</span>
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
-                Tvoja sledeća avantura <br> <span class="text-indigo-400">počinje ovde.</span>
-            </h1>
-            <p class="text-lg md:text-xl text-slate-200 mb-10 max-w-2xl mx-auto font-light">
-                Najveći izbor društvenih igara, TCG karata i opreme u regionu. 
-                Pronađi igru koja će okupiti tvoju ekipu.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="shop.html" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition transform hover:scale-105 shadow-xl shadow-indigo-900/50">
-                    <i class="fa-solid fa-store mr-2"></i> Istraži Prodavnicu
-                </a>
-                <a href="#community" class="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold rounded-xl transition">
-                    Saznaj više
-                </a>
+    <!-- SLIDESHOW HERO -->
+    <header class="slider-container" id="hero-slider">
+        <!-- Slide 1 -->
+        <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1610890716171-6b1c9f2c723c?q=80&w=1920');">
+            <div class="slide-overlay flex items-center justify-center text-center text-white">
+                <div class="container px-4">
+                    <span class="inline-block py-1 px-3 rounded-full bg-indigo-500/30 border border-indigo-400/50 backdrop-blur-sm text-indigo-100 text-xs font-bold tracking-widest uppercase mb-4">Dobrodošli</span>
+                    <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">Avantura Počinje Ovde</h1>
+                    <a href="shop.html" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-xl">Istraži Prodavnicu</a>
+                </div>
             </div>
         </div>
-        
-        <!-- Ukrasni oblici -->
-        <div class="absolute bottom-0 w-full h-24 bg-gradient-to-t from-slate-50 to-transparent"></div>
+        <!-- Slide 2 -->
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=1920');">
+            <div class="slide-overlay flex items-center justify-center text-center text-white">
+                <div class="container px-4">
+                    <span class="inline-block py-1 px-3 rounded-full bg-red-500/30 border border-red-400/50 backdrop-blur-sm text-red-100 text-xs font-bold tracking-widest uppercase mb-4">Velika Akcija</span>
+                    <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">Popusti na TCG Pakete</h1>
+                    <a href="shop.html?category=tcg" class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-xl">Pogledaj Ponudu</a>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <!-- KATEGORIJE -->
-    <section id="kategorije" class="py-20 container mx-auto px-4">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Šta te zanima?</h2>
-            <p class="text-slate-500 max-w-2xl mx-auto">Bez obzira da li si strateg, sakupljač karata ili tražiš zabavu za žurku, imamo nešto za tebe.</p>
-        </div>
+    <!-- CONTENT WRAPPER -->
+    <div class="flex-grow">
+        
+        <!-- NAJPOPULARNIJE IGRE (DYNAMIC) -->
+        <section class="py-20 container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-fire text-red-500"></i> Najpopularnije ovog meseca
+            </h2>
+            <p class="text-slate-500 mb-10">Ovo su igre koje svi kupuju trenutno.</p>
+            
+            <div id="popular-games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- JS ubacuje igre ovde -->
+                <div class="col-span-full text-center py-10"><div class="loader mx-auto"></div></div>
+            </div>
+        </section>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Board Games Card -->
-            <a href="shop.html" class="group relative overflow-hidden rounded-2xl shadow-lg h-96 cursor-pointer">
-                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition z-10"></div>
-                <img src="https://images.unsplash.com/photo-1632501641765-e568d28b0015?q=80&w=800&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-110" referrerpolicy="no-referrer">
-                <div class="absolute bottom-0 left-0 p-8 z-20">
-                    <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-indigo-300 transition">Društvene Igre</h3>
-                    <p class="text-slate-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition duration-500">Od Catan-a do Gloomhaven-a. Strategije, porodične i party igre.</p>
-                    <span class="inline-flex items-center text-white font-bold text-sm">Pogledaj ponudu <i class="fa-solid fa-arrow-right ml-2"></i></span>
-                </div>
-            </a>
-
-            <!-- TCG Card -->
-            <a href="shop.html" class="group relative overflow-hidden rounded-2xl shadow-lg h-96 cursor-pointer">
-                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition z-10"></div>
-                <img src="https://images.unsplash.com/photo-1622811090382-7201c7755584?q=80&w=800&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-110" referrerpolicy="no-referrer">
-                <div class="absolute bottom-0 left-0 p-8 z-20">
-                    <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition">TCG Karte</h3>
-                    <p class="text-slate-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition duration-500">Magic, Yu-Gi-Oh!, Pokemon. Boosteri, špilovi i singlovi.</p>
-                    <span class="inline-flex items-center text-white font-bold text-sm">Pogledaj ponudu <i class="fa-solid fa-arrow-right ml-2"></i></span>
-                </div>
-            </a>
-
-            <!-- Oprema Card -->
-            <a href="shop.html" class="group relative overflow-hidden rounded-2xl shadow-lg h-96 cursor-pointer">
-                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition z-10"></div>
-                <img src="https://images.unsplash.com/photo-1606167668584-78701c57f13d?q=80&w=800&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-110" referrerpolicy="no-referrer">
-                <div class="absolute bottom-0 left-0 p-8 z-20">
-                    <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-blue-300 transition">Oprema</h3>
-                    <p class="text-slate-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition duration-500">Sleeves, kutije, kockice i podloge za igru.</p>
-                    <span class="inline-flex items-center text-white font-bold text-sm">Pogledaj ponudu <i class="fa-solid fa-arrow-right ml-2"></i></span>
-                </div>
-            </a>
-        </div>
-    </section>
-
-    <!-- ZAŠTO MI? -->
-    <section class="bg-indigo-900 text-white py-20 relative overflow-hidden">
-        <!-- Background elements -->
-        <i class="fa-solid fa-dice-d20 absolute top-10 left-10 text-9xl text-indigo-800 opacity-20 animate-pulse"></i>
-        <i class="fa-solid fa-chess-knight absolute bottom-10 right-10 text-9xl text-indigo-800 opacity-20"></i>
-
-        <div class="container mx-auto px-4 relative z-10">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-                <div class="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/10 transition">
-                    <div class="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/50">
-                        <i class="fa-solid fa-truck-fast text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Brza Dostava</h3>
-                    <p class="text-indigo-200">Sve narudžbine šaljemo istog ili sledećeg dana. Tvoje igre stižu munjevitom brzinom.</p>
-                </div>
-                <div class="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/10 transition">
-                    <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-500/50">
-                        <i class="fa-solid fa-users text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Zajednica</h3>
-                    <p class="text-indigo-200">Pridruži se našim turnirima i večerima društvenih igara. Upoznaj nove igrače!</p>
-                </div>
-                <div class="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/10 transition">
-                    <div class="w-16 h-16 bg-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-pink-500/50">
-                        <i class="fa-solid fa-certificate text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Stručno Osoblje</h3>
-                    <p class="text-indigo-200">Ne znaš šta da kupiš? Naš tim pasioniranih gejmera će ti pomoći da izabereš savršenu igru.</p>
+        <!-- KATEGORIJE -->
+        <section class="bg-indigo-900 py-20 text-white">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-3xl font-bold mb-12">Istraži po kategorijama</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <a href="shop.html?category=boardgame" class="bg-white/10 hover:bg-white/20 p-8 rounded-2xl backdrop-blur-sm transition border border-white/10 group">
+                        <i class="fa-solid fa-chess-board text-5xl mb-4 text-indigo-300 group-hover:scale-110 transition"></i>
+                        <h3 class="text-xl font-bold">Društvene Igre</h3>
+                    </a>
+                    <a href="shop.html?category=tcg" class="bg-white/10 hover:bg-white/20 p-8 rounded-2xl backdrop-blur-sm transition border border-white/10 group">
+                        <i class="fa-solid fa-layer-group text-5xl mb-4 text-purple-300 group-hover:scale-110 transition"></i>
+                        <h3 class="text-xl font-bold">TCG Karte</h3>
+                    </a>
+                    <a href="shop.html?category=equipment" class="bg-white/10 hover:bg-white/20 p-8 rounded-2xl backdrop-blur-sm transition border border-white/10 group">
+                        <i class="fa-solid fa-box-open text-5xl mb-4 text-blue-300 group-hover:scale-110 transition"></i>
+                        <h3 class="text-xl font-bold">Oprema</h3>
+                    </a>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- NEWSLETTER / CTA -->
-    <section class="py-20 container mx-auto px-4">
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-10 md:p-16 text-center text-white shadow-2xl relative overflow-hidden">
-            <div class="relative z-10">
-                <h2 class="text-3xl md:text-5xl font-bold mb-6">Spreman za igru?</h2>
-                <p class="text-lg text-indigo-100 mb-8 max-w-2xl mx-auto">Pogledaj našu kompletnu ponudu od preko 100 naslova. Akcije na TCG proizvode traju do kraja meseca!</p>
-                <a href="shop.html" class="inline-block px-10 py-4 bg-white text-indigo-600 font-bold text-lg rounded-xl hover:bg-slate-100 transition shadow-lg">
-                    Otvori Prodavnicu
+        <!-- BLOGOVI I RECENZIJE -->
+        <section id="blog" class="py-20 container mx-auto px-4">
+            <div class="flex flex-col lg:flex-row gap-12">
+                
+                <!-- Blogovi -->
+                <div class="lg:w-2/3">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-8">Novosti iz sveta igara</h2>
+                    <div id="blog-container" class="space-y-8">
+                        <p class="text-slate-400">Učitavanje blogova...</p>
+                    </div>
+                </div>
+
+                <!-- Recenzije -->
+                <div class="lg:w-1/3">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-8">Šta kažu igrači?</h2>
+                    <div id="reviews-container" class="space-y-6">
+                        <p class="text-slate-400">Učitavanje recenzija...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- POPUP ZA REGISTRACIJU -->
+    <div id="promo-popup" class="fixed inset-0 z-[100] hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closePromoPopup()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden transform scale-95 transition-transform duration-300" id="promo-content">
+            <button onclick="closePromoPopup()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            
+            <div class="bg-indigo-600 p-8 text-center text-white">
+                <i class="fa-solid fa-gift text-5xl mb-4 animate-bounce"></i>
+                <h2 class="text-3xl font-bold">15% POPUSTA!</h2>
+                <p class="text-indigo-100 mt-2">Samo za nove članove Zmajeve Jazbine.</p>
+            </div>
+            
+            <div class="p-8 text-center">
+                <p class="text-slate-600 mb-6">Registruj se danas i dobijaš ekskluzivan kod za popust na prvu kupovinu.</p>
+                <a href="register.html" class="block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg mb-3">
+                    Preuzmi Popust
                 </a>
+                <button onclick="closePromoPopup()" class="text-slate-400 hover:text-slate-600 text-sm">Ne, hvala, plaćam punu cenu.</button>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- FOOTER -->
-    <footer id="lokacija" class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
-        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
             <div>
-                <div class="flex items-center gap-2 mb-4 text-white">
+                <div class="flex items-center gap-2 mb-4 text-white justify-center md:justify-start">
                     <i class="fa-solid fa-dragon text-2xl text-indigo-500"></i>
                     <span class="text-xl font-bold">ZmajevaJazbina</span>
                 </div>
@@ -195,33 +168,43 @@
                     <li><a href="index.html" class="hover:text-indigo-500">Početna</a></li>
                     <li><a href="shop.html" class="hover:text-indigo-500">Prodavnica</a></li>
                     <li><a href="#" class="hover:text-indigo-500">Turniri</a></li>
-                    <li><a href="#" class="hover:text-indigo-500">O Nama</a></li>
                 </ul>
             </div>
             <div>
                 <h4 class="text-white font-bold mb-4">Kontakt</h4>
                 <ul class="space-y-2 text-sm">
-                    <li><i class="fa-solid fa-location-dot mr-2"></i> Bulevar Oslobođenja 12, Novi Sad</li>
+                    <li><i class="fa-solid fa-location-dot mr-2"></i> Bulevar Oslobođenja 12</li>
                     <li><i class="fa-solid fa-phone mr-2"></i> +381 60 123 4567</li>
                     <li><i class="fa-solid fa-envelope mr-2"></i> info@zmajevajazbina.rs</li>
                 </ul>
             </div>
             <div>
                 <h4 class="text-white font-bold mb-4">Pratite nas</h4>
-                <div class="flex space-x-4">
+                <div class="flex space-x-4 justify-center md:justify-start">
                     <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
                     <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><i class="fa-brands fa-facebook"></i></a>
-                    <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-purple-600 hover:text-white transition"><i class="fa-brands fa-discord"></i></a>
                 </div>
             </div>
         </div>
         <div class="container mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-center text-xs">
-            &copy; 2023 Zmajeva Jazbina. Sva prava zadržana.
+            &copy; 2024 Zmajeva Jazbina. Sva prava zadržana.
         </div>
     </footer>
     
-    <!-- Link ka skripti -->
     <script src="js/script.js"></script>
+    <script>
+        // Slideshow Logika (Samo za homepage)
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        
+        function nextSlide() {
+            if(slides.length === 0) return;
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+        if(slides.length > 0) setInterval(nextSlide, 5000); 
+    </script>
 
 </body>
 </html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Zmajeva Jazbina</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 flex h-screen">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-800 text-white flex flex-col">
+        <div class="p-6 text-center border-b border-slate-700">
+            <h1 class="text-xl font-bold text-indigo-400">ADMIN PANEL</h1>
+            <p class="text-xs text-slate-400">Zmajeva Jazbina</p>
+        </div>
+        <nav class="flex-grow p-4 space-y-2">
+            <button onclick="showSection('dashboard')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-chart-line"></i> Pregled
+            </button>
+            <button onclick="showSection('orders')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-box"></i> Narudžbine
+            </button>
+            <button onclick="showSection('games')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-dice"></i> Proizvodi
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <a href="index.html" class="block text-center text-sm text-slate-400 hover:text-white">Nazad na sajt</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow p-8 overflow-y-auto">
+        
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboard" class="space-y-6">
+            <h2 class="text-3xl font-bold text-gray-800">Pregled Poslovanja</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
+                    <p class="text-gray-500 text-sm">Ukupno Zarada</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-revenue">0 RSD</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                    <p class="text-gray-500 text-sm">Broj Narudžbina</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-orders">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                    <p class="text-gray-500 text-sm">Korisnika</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-users">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+                    <p class="text-gray-500 text-sm">Proizvoda</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-products">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="font-bold text-lg mb-4">Poslednje Narudžbine</h3>
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 text-gray-600">
+                        <tr>
+                            <th class="p-3">ID</th>
+                            <th class="p-3">Kupac</th>
+                            <th class="p-3">Iznos</th>
+                            <th class="p-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-orders-table">
+                        <!-- JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ORDERS SECTION -->
+        <section id="orders" class="hidden space-y-6">
+            <h2 class="text-3xl font-bold text-gray-800">Upravljanje Narudžbinama</h2>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-800 text-white">
+                        <tr>
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Kupac & Adresa</th>
+                            <th class="p-4">Sadržaj</th>
+                            <th class="p-4">Iznos</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Akcija</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-orders-table" class="divide-y divide-gray-100">
+                        <!-- JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- GAMES SECTION -->
+        <section id="games" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-3xl font-bold text-gray-800">Proizvodi</h2>
+                <button onclick="document.getElementById('add-game-modal').classList.remove('hidden')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    + Dodaj Igru
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-4">
+                <div id="admin-games-list" class="grid grid-cols-1 gap-4">
+                    <!-- JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL ZA DODAVANJE IGRE -->
+    <div id="add-game-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Nova Igra</h3>
+            <form id="add-game-form" class="space-y-3">
+                <input type="text" id="new-name" placeholder="Naziv igre" class="w-full border p-2 rounded" required>
+                <input type="number" id="new-price" placeholder="Cena (RSD)" class="w-full border p-2 rounded" required>
+                <select id="new-type" class="w-full border p-2 rounded">
+                    <option value="boardgame">Društvena Igra</option>
+                    <option value="tcg">TCG Karte</option>
+                    <option value="equipment">Oprema</option>
+                </select>
+                <input type="text" id="new-image" placeholder="Link slike ili /pictures/ime.jpeg" class="w-full border p-2 rounded" required>
+                <textarea id="new-desc" placeholder="Opis" class="w-full border p-2 rounded h-24"></textarea>
+                
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" onclick="document.getElementById('add-game-modal').classList.add('hidden')" class="px-4 py-2 text-gray-600">Otkaži</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+        });
+
+        function showSection(id) {
+            document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'dashboard') loadDashboard();
+            if(id === 'orders') loadAllOrders();
+            if(id === 'games') loadAdminGames();
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                if (res.status === 403 || res.status === 401) {
+                    alert("Niste Admin!"); window.location.href = 'index.html'; return;
+                }
+                const data = await res.json();
+                
+                document.getElementById('stat-revenue').innerText = parseInt(data.revenue).toLocaleString() + ' RSD';
+                document.getElementById('stat-orders').innerText = data.ordersCount;
+                document.getElementById('stat-users').innerText = data.usersCount;
+                document.getElementById('stat-products').innerText = data.productsCount;
+
+                const table = document.getElementById('recent-orders-table');
+                table.innerHTML = '';
+                data.recentOrders.forEach(o => {
+                    table.innerHTML += `
+                        <tr class="border-b last:border-0 hover:bg-gray-50">
+                            <td class="p-3 font-mono">#${o.id}</td>
+                            <td class="p-3">${o.full_name}</td>
+                            <td class="p-3 font-bold">${o.total_price} RSD</td>
+                            <td class="p-3"><span class="px-2 py-1 rounded text-xs uppercase bg-gray-200">${o.status}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadAllOrders() {
+            const res = await fetch('/api/admin/orders');
+            const orders = await res.json();
+            const table = document.getElementById('all-orders-table');
+            table.innerHTML = '';
+            
+            orders.forEach(o => {
+                let statusClass = 'bg-yellow-100 text-yellow-700';
+                if(o.status === 'poslata') statusClass = 'bg-blue-100 text-blue-700';
+                if(o.status === 'isporučena') statusClass = 'bg-green-100 text-green-700';
+
+                table.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-4 font-bold">#${o.id}</td>
+                        <td class="p-4">
+                            <div class="font-bold">${o.full_name}</div>
+                            <div class="text-xs text-gray-500">${o.address}, ${o.city}</div>
+                            <div class="text-xs text-gray-500">${o.phone}</div>
+                        </td>
+                        <td class="p-4 text-sm text-gray-600 max-w-xs truncate">${o.items}</td>
+                        <td class="p-4 font-bold text-indigo-600">${o.total_price} RSD</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${statusClass}">${o.status}</span></td>
+                        <td class="p-4">
+                            <select onchange="updateStatus(${o.id}, this.value)" class="border rounded text-sm p-1">
+                                <option value="nova" ${o.status==='nova'?'selected':''}>Nova</option>
+                                <option value="poslata" ${o.status==='poslata'?'selected':''}>Poslata</option>
+                                <option value="isporučena" ${o.status==='isporučena'?'selected':''}>Isporučena</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function updateStatus(id, status) {
+            await fetch(`/api/admin/orders/${id}/status`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status })
+            });
+            alert("Status promenjen!");
+            loadAllOrders();
+        }
+
+        async function loadAdminGames() {
+            const res = await fetch('/api/games');
+            const games = await res.json();
+            const list = document.getElementById('admin-games-list');
+            list.innerHTML = '';
+            
+            games.forEach(g => {
+                list.innerHTML += `
+                    <div class="flex items-center justify-between border p-3 rounded bg-gray-50">
+                        <div class="flex items-center gap-3">
+                            <img src="${g.image_url}" class="w-10 h-10 object-cover rounded">
+                            <div>
+                                <div class="font-bold">${g.name}</div>
+                                <div class="text-xs text-gray-500">${g.price} RSD</div>
+                            </div>
+                        </div>
+                        <button onclick="deleteGame(${g.id})" class="text-red-500 hover:text-red-700 px-3 py-1 border border-red-200 rounded hover:bg-red-50">Obriši</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function deleteGame(id) {
+            if(confirm("Da li ste sigurni?")) {
+                await fetch(`/api/admin/games/${id}`, { method: 'DELETE' });
+                loadAdminGames();
+            }
+        }
+
+        document.getElementById('add-game-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('new-name').value,
+                price: document.getElementById('new-price').value,
+                type: document.getElementById('new-type').value,
+                image_url: document.getElementById('new-image').value,
+                description: document.getElementById('new-desc').value
+            };
+            
+            await fetch('/api/admin/games', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+            });
+            
+            document.getElementById('add-game-modal').classList.add('hidden');
+            loadAdminGames();
+        });
+    </script>
+</body>
+</html> 

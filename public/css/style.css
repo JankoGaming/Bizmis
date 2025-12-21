@@ -1,71 +1,80 @@
 body { 
     font-family: 'Poppins', sans-serif; 
-    background-color: #f8fafc; 
+    transition: background-color 0.3s, color 0.3s;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar { 
-    width: 8px; 
-}
-::-webkit-scrollbar-track { 
-    background: #f1f1f1; 
-}
-::-webkit-scrollbar-thumb { 
-    background: #6366f1; 
-    border-radius: 4px; 
-}
-
-/* Hover efekti */
-.card-hover:hover { 
-    transform: translateY(-5px); 
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+/* --- TABS DIZAJN (Popravljeno) --- */
+/* Kontejner za tabove sada ima boju, nije beo */
+.tabs-container {
+    background-color: #e0e7ff; /* Svetlo indigo */
+    padding: 0.5rem;
+    border-radius: 1rem;
+    display: inline-flex;
+    gap: 0.5rem;
+    overflow-x: auto;
 }
 
-/* Range Slider - Ovde je bila greška */
-input[type=range] { 
-    -webkit-appearance: none; 
-    appearance: none; /* Dodato standardno svojstvo */
-    width: 100%; 
-    background: transparent; 
+.tab-btn {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    color: #4b5563;
+    transition: all 0.2s;
+    border: none !important; /* Sklanjamo donju liniju */
 }
 
-input[type=range]::-webkit-slider-thumb { 
-    -webkit-appearance: none; 
-    appearance: none; /* Dodato standardno svojstvo */
-    height: 16px; 
-    width: 16px; 
-    border-radius: 50%; 
-    background: #4F46E5; 
-    cursor: pointer; 
-    margin-top: -6px; 
+.tab-btn:hover {
+    background-color: rgba(255,255,255, 0.5);
+    color: #4338ca;
 }
 
-input[type=range]::-webkit-slider-runnable-track { 
-    width: 100%; 
-    height: 4px; 
-    cursor: pointer; 
-    background: #e2e8f0; 
-    border-radius: 2px; 
+.tab-btn.active {
+    background-color: #4f46e5; /* Jaka indigo */
+    color: white !important;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
 }
 
-/* Tabovi */
-.tab-btn.active { 
-    color: #4F46E5; 
-    border-bottom: 2px solid #4F46E5; 
-    background-color: #EEF2FF; 
+/* --- DARK MODE --- */
+body.dark-mode {
+    background-color: #0f172a; /* Tamno plava/crna */
+    color: #f1f5f9;
 }
 
-/* Loader animacija */
-.loader { 
-    border: 4px solid #f3f3f3; 
-    border-radius: 50%; 
-    border-top: 4px solid #3498db; 
-    width: 40px; 
-    height: 40px; 
-    animation: spin 1s linear infinite; 
+body.dark-mode nav, 
+body.dark-mode .bg-white,
+body.dark-mode footer {
+    background-color: #1e293b !important; /* Malo svetlija tamna */
+    color: #f1f5f9 !important;
+    border-color: #334155 !important;
 }
 
-@keyframes spin { 
-    0% { transform: rotate(0deg); } 
-    100% { transform: rotate(360deg); } 
+body.dark-mode .text-slate-500, 
+body.dark-mode .text-slate-600,
+body.dark-mode .text-gray-600 {
+    color: #94a3b8 !important;
 }
+
+body.dark-mode .text-slate-800, 
+body.dark-mode .text-slate-900 {
+    color: #f8fafc !important;
+}
+
+body.dark-mode input, 
+body.dark-mode select {
+    background-color: #334155;
+    color: white;
+    border-color: #475569;
+}
+
+body.dark-mode .tabs-container {
+    background-color: #334155;
+}
+
+body.dark-mode .card-hover {
+    border-color: #334155;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 5px; }

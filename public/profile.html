@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moj Profil | Zmajeva Jazbina</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css"> 
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="text-slate-800 bg-slate-50 flex flex-col min-h-screen">
+
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg"><i class="fa-solid fa-dragon text-xl"></i></div>
+                <span class="text-xl font-bold tracking-tight text-slate-900">Zmajeva<span class="text-indigo-600">Jazbina</span></span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="text-slate-500 hover:text-indigo-600 text-xl transition">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+                <a href="shop.html" class="text-slate-600 hover:text-indigo-600 font-medium">Nazad u prodavnicu</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-10 flex-grow">
+        <h1 class="text-3xl font-bold mb-8 text-slate-800">Moj Profil</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- 1. LIČNI PODACI -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-user-pen text-indigo-500"></i> Moji Podaci
+                </h3>
+                <form id="profile-form" class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Ime i Prezime</label>
+                        <input type="text" id="p-fullname" class="w-full border rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Adresa</label>
+                        <input type="text" id="p-address" class="w-full border rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Grad</label>
+                            <input type="text" id="p-city" class="w-full border rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Poštanski Br.</label>
+                            <input type="text" id="p-zip" class="w-full border rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Telefon</label>
+                        <input type="text" id="p-phone" class="w-full border rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg mt-4 shadow transition">Sačuvaj Izmene</button>
+                </form>
+                
+                <button onclick="logout()" class="w-full mt-6 py-2 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition">
+                    <i class="fa-solid fa-right-from-bracket mr-2"></i> Odjavi se
+                </button>
+            </div>
+
+            <!-- 2. LISTA ŽELJA (Elementi postoje, JS će ih popuniti) -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-heart text-red-500"></i> Lista Želja
+                </h3>
+                <div id="wishlist-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    <p class="text-slate-400 text-sm">Učitavanje...</p>
+                </div>
+            </div>
+
+            <!-- 3. ISTORIJA NARUDŽBINA -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-box-open text-blue-500"></i> Istorija Narudžbina
+                </h3>
+                <div id="orders-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    <p class="text-slate-400 text-sm">Učitavanje...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="notification-toast" class="fixed bottom-5 right-5 z-[100] transform transition-all duration-300 translate-y-24 opacity-0">
+        <div class="bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-green-400 text-xl"></i>
+            <span id="notification-message" class="font-medium">Poruka</span>
+        </div>
+    </div>
+
+    <!-- Sva logika je sada ovde -->
+    <script src="js/script.js"></script>
+</body>
+</html>

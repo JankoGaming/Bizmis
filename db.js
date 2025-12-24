@@ -4,13 +4,13 @@ require('dotenv').config();
 console.log("--- KONEKCIJA KA BAZI ---");
 
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
     
     // 👇 TVOJA LOZINKA OVDE (ako je root, ostavi root)
-    password: process.env.DB_PASSWORD || 'root', 
+    password: process.env.DB_PASSWORD, 
 
-    database: process.env.DB_NAME || 'board_games',
+    database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

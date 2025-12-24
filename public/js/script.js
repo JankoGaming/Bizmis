@@ -40,8 +40,9 @@ function updateThemeIcon(isDark) {
 }
 if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
-// --- 4. INIT FUNKCIJA ---
+// --- 4. INIT FUNKCIJA (GLAVNI RUTER) ---
 async function init() {
+    // 1. Injekcija dugmeta za temu
     if (!document.getElementById('theme-icon')) {
         const navRight = document.querySelector('nav .flex.items-center.gap-4') || document.querySelector('nav .flex.items-center.space-x-4');
         if (navRight) {
@@ -54,13 +55,37 @@ async function init() {
     }
     updateThemeIcon(document.body.classList.contains('dark-mode'));
 
-    await Promise.all([refreshCartCount(), checkUserLogin(), loadWishlistIds()]);
+    // Učitaj podatke paralelno (uključujući proveru da li je admin)
+    await Promise.all([
+        refreshCartCount(),
+        checkUserLogin(),
+        loadWishlistIds()
+    ]);
 
-    if (document.getElementById('cart-items-container')) { loadCartPage(); return; }
-    if (document.getElementById('checkout-form')) { loadCheckoutSummary(); setupCheckoutForm(); return; }
-    if (document.getElementById('profile-form')) { loadProfilePage(); return; }
+    // RUTER: Provera na kojoj smo stranici
 
+    // A) KORPA
+    if (document.getElementById('cart-items-container')) {
+        loadCartPage();
+        return; 
+    }
+
+    // B) CHECKOUT
+    if (document.getElementById('checkout-form')) {
+        loadCheckoutSummary();
+        setupCheckoutForm();
+        return;
+    }
+
+    // C) PROFIL
+    if (document.getElementById('profile-form')) {
+        loadProfilePage();
+        return;
+    }
+
+    // D) SHOP (PRODAVNICA)
     if (grid && searchInput) {
+        // Učitavamo igre TEK KAD ZNAMO da li je admin (zbog prikaza stanja)
         const urlParams = new URLSearchParams(window.location.search);
         const catParam = urlParams.get('category');
         if (catParam) {
@@ -70,6 +95,7 @@ async function init() {
         loadProducts();
     }
 
+    // E) HOMEPAGE
     if (document.getElementById('popular-games-grid')) {
         loadHomePageContent();
         checkPromoPopup();
@@ -77,9 +103,27 @@ async function init() {
 }
 
 // --- 5. POMOĆNE FUNKCIJE ---
+// Levenshtein za pametnu pretragu
+function levenshtein(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) == a.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+            else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
 function getOptimizedImage(url, width = 400) {
-    if (!url) return `https://placehold.co/${width}x${Math.floor(width*0.7)}?text=Nema+Slike`;
-    if (url.startsWith('http')) return `https://wsrv.nl/?url=${url}&w=${width}&output=webp`;
+    if (!url) return `https://placehold.co/${width}x${Math.floor(width * 0.7)}?text=Nema+Slike`;
+    if (url.startsWith('http')) {
+        return `https://wsrv.nl/?url=${url}&w=${width}&output=webp`;
+    }
     return `${url}?v=1`;
 }
 
@@ -89,27 +133,35 @@ function showNotification(msg) {
     if (toast && msgEl) {
         msgEl.innerText = msg;
         toast.classList.remove('translate-y-24', 'opacity-0');
-        setTimeout(() => toast.classList.add('translate-y-24', 'opacity-0'), 3000);
-    } else { alert(msg); }
+        setTimeout(() => {
+            toast.classList.add('translate-y-24', 'opacity-0');
+        }, 3000);
+    } else {
+        alert(msg);
+    }
 }
 
 // --- 6. AUTH & ROLE ---
 async function checkUserLogin() {
-    const navContainer = document.querySelector('nav .flex.items-center.gap-4') || document.querySelector('nav .flex.items-center.space-x-4');
     try {
         const res = await fetch('/api/check-auth');
         const data = await res.json();
         
-        currentUserRole = data.role || 'user'; 
+        currentUserRole = data.role || 'user'; // Pamtimo ulogu
 
+        const navContainer = document.querySelector('nav .flex.items-center.gap-4') || document.querySelector('nav .flex.items-center.space-x-4');
         if (!navContainer) return;
 
-        const oldUserDiv = document.getElementById('user-auth-div'); if(oldUserDiv) oldUserDiv.remove();
-        const userDiv = document.createElement('div'); userDiv.id = 'user-auth-div'; userDiv.className = "flex items-center gap-3";
+        const oldUserDiv = document.getElementById('user-auth-div'); 
+        if (oldUserDiv) oldUserDiv.remove();
+        
+        const userDiv = document.createElement('div'); 
+        userDiv.id = 'user-auth-div'; 
+        userDiv.className = "flex items-center gap-3";
         
         let adminBtn = '';
         if (data.role === 'admin') {
-            adminBtn = `<a href="admin.html" class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition mr-3">ADMIN</a>`;
+            adminBtn = `<a href="admin.html" class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition mr-3 shadow-sm">ADMIN</a>`;
         }
 
         if (data.loggedIn) { 
@@ -119,22 +171,28 @@ async function checkUserLogin() {
         }
         
         const cartLink = document.querySelector('a[href="cart.html"]');
-        if (cartLink && cartLink.parentNode) { cartLink.parentNode.insertBefore(userDiv, cartLink); }
+        if (cartLink && cartLink.parentNode) { 
+            cartLink.parentNode.insertBefore(userDiv, cartLink); 
+        }
     } catch (e) { console.error("Auth greška", e); }
 }
 
 async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = 'index.html'; }
 
-// --- 7. SHOP LOGIKA ---
+// --- 7. SHOP LOGIKA (RENDER & STOCK) ---
 async function loadProducts() {
     if(loader) loader.classList.remove('hidden');
     if(grid) grid.innerHTML = '';
+    
     try {
-        const response = await fetch('/api/games'); 
+        const response = await fetch('/api/games');
         allProducts = await response.json();
         if(loader) loader.classList.add('hidden');
         filterProducts(); 
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+        console.error("Greška pri učitavanju igara:", error);
+        if(grid) grid.innerHTML = '<p class="text-red-500 text-center col-span-full">Greška pri učitavanju proizvoda.</p>';
+    }
 }
 
 function filterProducts() {
@@ -144,26 +202,34 @@ function filterProducts() {
     const maxPrice = priceSlider ? parseInt(priceSlider.value) : 100000;
     const onlyInStock = stockFilter ? stockFilter.checked : false;
     
-    const checkedComplexity = Array.from(document.querySelectorAll('.filter-complexity:checked')).map(cb => cb.value);
-    const checkedPlayers = Array.from(document.querySelectorAll('.filter-players:checked')).map(cb => cb.value);
+    const checkedComplexity = document.querySelectorAll('.filter-complexity') ? Array.from(document.querySelectorAll('.filter-complexity:checked')).map(cb => cb.value) : [];
+    const checkedPlayers = document.querySelectorAll('.filter-players') ? Array.from(document.querySelectorAll('.filter-players:checked')).map(cb => cb.value) : [];
 
     let filtered = allProducts.filter(item => {
         const finalPrice = item.discount_price || item.price;
+        
+        // Tabovi
         if (currentTab === 'akcije') { if (!item.discount_price) return false; } 
         else if (currentTab !== 'all' && item.type !== currentTab) return false;
         
-        if (term && !item.name.toLowerCase().includes(term)) return false;
+        // Pametna pretraga
+        if (term) {
+            const exact = item.name.toLowerCase().includes(term);
+            const dist = levenshtein(term, item.name.toLowerCase());
+            // Dozvoljavamo malu grešku (dist <= 2) za reči duže od 3 slova
+            const fuzzy = dist <= 2 && term.length > 3; 
+            if (!exact && !fuzzy) return false;
+        }
+        
         if (finalPrice > maxPrice) return false;
-
         if (onlyInStock && (!item.stock_quantity || item.stock_quantity <= 0)) return false;
 
         if (checkedComplexity.length > 0) { if (!item.complexity || !checkedComplexity.includes(item.complexity)) return false; }
         if (checkedPlayers.length > 0) {
-            if (!item.players_min || !item.players_max) return false;
             let match = false;
-            if (checkedPlayers.includes('2') && (item.players_min <= 2 && item.players_max >= 2)) match = true;
-            if (checkedPlayers.includes('3-5') && (item.players_max >= 3 && item.players_min <= 5)) match = true;
-            if (checkedPlayers.includes('6+') && (item.players_max >= 6)) match = true;
+            if (checkedPlayers.includes('2') && item.players_min <= 2 && item.players_max >= 2) match = true;
+            if (checkedPlayers.includes('3-5') && item.players_max >= 3 && item.players_min <= 5) match = true;
+            if (checkedPlayers.includes('6+') && item.players_max >= 6) match = true;
             if (!match) return false;
         }
         return true;
@@ -171,9 +237,10 @@ function filterProducts() {
 
     if (sortSelect) {
         const sort = sortSelect.value;
-        if (sort === 'price-asc') filtered.sort((a,b) => (a.discount_price||a.price) - (b.discount_price||b.price));
-        if (sort === 'price-desc') filtered.sort((a,b) => (b.discount_price||b.price) - (a.discount_price||a.price));
-        if (sort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
+        if (sort === 'availability') filtered.sort((a,b) => (b.stock_quantity||0) - (a.stock_quantity||0));
+        else if (sort === 'price-asc') filtered.sort((a,b) => (a.discount_price||a.price) - (b.discount_price||b.price));
+        else if (sort === 'price-desc') filtered.sort((a,b) => (b.discount_price||b.price) - (a.discount_price||a.price));
+        else if (sort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
     }
     renderProducts(filtered);
 }
@@ -181,7 +248,6 @@ function filterProducts() {
 function renderProducts(list) {
     if (!grid) return;
     grid.innerHTML = '';
-    
     if (countEl) countEl.innerText = list.length;
     if (list.length === 0) { if (noResults) noResults.classList.remove('hidden'); return; } 
     else { if (noResults) noResults.classList.add('hidden'); }
@@ -194,34 +260,43 @@ function renderProducts(list) {
         else if (game.complexity === 'srednje') { badgeClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'; complexityLabel = 'Srednje'; }
         else if (game.complexity === 'tesko') { badgeClass = 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'; complexityLabel = 'Teško'; }
 
-        const isOutOfStock = (game.stock_quantity === undefined || game.stock_quantity <= 0);
-        let stockHtml = '';
-        let cardOpacity = '';
-        let imageFilter = '';
-        let btnDisabled = '';
-        let btnClass = 'bg-slate-100 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-400 dark:hover:text-white';
-        let btnIcon = '<i class="fa-solid fa-plus"></i>';
-
+        // --- STOCK LOGIKA ---
+        const qty = game.stock_quantity !== undefined ? game.stock_quantity : 0;
+        const isOutOfStock = qty <= 0;
+        
+        let stockHtml = '', btnClass = '', btnDisabled = '', btnContent = '<i class="fa-solid fa-plus"></i>';
+        
         if (currentUserRole === 'admin') {
+            // ADMIN: Vidi tačan broj uvek
             let color = isOutOfStock ? 'bg-red-600 border-red-400' : 'bg-blue-600 border-blue-400';
-            stockHtml = `<div class="absolute top-3 left-3 ${color} text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm border z-20">ZALIHA: ${game.stock_quantity}</div>`;
+            stockHtml = `<div class="absolute bottom-3 right-3 ${color} text-white text-xs px-2 py-1 rounded z-30 font-bold border border-white/20">Zaliha: ${qty}</div>`;
         } else {
-            if (!isOutOfStock) {
-                stockHtml = `<div class="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-20">NA STANJU</div>`;
-            } else {
-                stockHtml = `<div class="absolute inset-0 bg-white/60 dark:bg-black/60 z-10 flex items-center justify-center backdrop-blur-[1px]"><span class="bg-red-600 text-white font-bold px-4 py-2 rounded-xl shadow-lg transform -rotate-12 border-2 border-white text-sm">RASPRODATO</span></div>`;
-                cardOpacity = 'opacity-75';
-                imageFilter = 'grayscale';
-                btnDisabled = 'disabled style="opacity:0.5; cursor:not-allowed;"';
+            // USER: Vidi status
+            if (isOutOfStock) {
+                stockHtml = `<div class="absolute inset-0 bg-white/60 dark:bg-black/60 z-10 flex items-center justify-center backdrop-blur-[2px]"><span class="bg-red-600 text-white font-bold px-4 py-2 rounded-xl shadow-lg transform -rotate-12 border-2 border-white text-sm">RASPRODATO</span></div>`;
+                btnDisabled = 'disabled style="opacity:0.5;cursor:not-allowed;"';
+                btnContent = '<i class="fa-solid fa-ban"></i>';
                 btnClass = 'bg-gray-200 text-gray-400 dark:bg-slate-800 dark:text-gray-600';
-                btnIcon = '<i class="fa-solid fa-ban"></i>';
+            } else {
+                stockHtml = `<div class="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-20">NA STANJU</div>`;
+                btnClass = 'bg-slate-100 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-400 dark:hover:text-white';
             }
         }
 
+        // --- BEDŽEVI ---
+        let badges = '';
+        if(game.total_sold >= 5) badges += `<span class="absolute top-3 left-3 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded shadow z-20" style="margin-top: 25px">BESTSELLER</span>`;
+        if(qty > 0 && qty < 3) badges += `<span class="absolute top-10 left-3 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow z-20" style="margin-top: 25px">POSLEDNJI KOMADI</span>`;
+
         let priceDisplay = `<span class="text-xl font-bold text-indigo-600 dark:text-indigo-400">${parseInt(game.price).toLocaleString()} RSD</span>`;
         let discountBadge = '';
+        
         if (game.discount_price && game.discount_price < game.price && !isOutOfStock) {
-            priceDisplay = `<div class="flex flex-col items-end"><span class="text-xs text-slate-400 dark:text-slate-500 line-through">${parseInt(game.price).toLocaleString()} RSD</span><span class="text-xl font-bold text-red-600 dark:text-red-400">${parseInt(game.discount_price).toLocaleString()} RSD</span></div>`;
+            priceDisplay = `
+                <div class="flex flex-col items-end">
+                    <span class="text-xs text-slate-400 dark:text-slate-500 line-through">${parseInt(game.price).toLocaleString()} RSD</span>
+                    <span class="text-xl font-bold text-red-600 dark:text-red-400">${parseInt(game.discount_price).toLocaleString()} RSD</span>
+                </div>`;
             discountBadge = `<span class="absolute top-3 right-12 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm animate-pulse z-20">AKCIJA</span>`;
         } else if (isOutOfStock) {
              priceDisplay = `<span class="text-xl font-bold text-gray-400 line-through decoration-2">${parseInt(game.discount_price || game.price).toLocaleString()} RSD</span>`;
@@ -231,22 +306,32 @@ function renderProducts(list) {
         const heartClass = isLiked ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart text-white';
 
         const card = document.createElement('div');
-        card.className = `bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden card-hover transition flex flex-col h-full group relative ${cardOpacity}`;
+        card.className = `bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden card-hover transition flex flex-col h-full group relative ${isOutOfStock ? 'opacity-75' : ''}`;
+        
         card.innerHTML = `
             <div class="relative h-56 p-6 flex items-center justify-center bg-slate-50 dark:bg-slate-700 overflow-hidden cursor-pointer" onclick="openModal(${game.id})">
-                <img src="${imgUrl}" loading="lazy" class="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-110 drop-shadow-sm ${imageFilter}">
+                <img src="${imgUrl}" loading="lazy" class="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-110 drop-shadow-sm ${isOutOfStock?'grayscale':''}">
                 ${stockHtml}
+                ${badges}
                 ${discountBadge}
-                <button onclick="event.stopPropagation(); toggleWishlist(${game.id}, this)" class="absolute top-3 right-3 w-8 h-8 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center backdrop-blur-sm transition z-20">
+                
+                <button onclick="event.stopPropagation(); toggleWishlist(${game.id}, this)" class="absolute top-3 right-3 w-8 h-8 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center backdrop-blur-sm transition z-20 hover:scale-110">
                     <i class="${heartClass} text-lg transition-colors"></i>
                 </button>
-                <div class="absolute bottom-3 left-3"> <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-lg ${badgeClass} shadow-sm">${complexityLabel}</span> </div>
+
+                <div class="absolute bottom-3 left-3"> 
+                    <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-lg ${badgeClass} shadow-sm">${complexityLabel}</span> 
+                </div>
             </div>
+            
             <div class="p-5 flex flex-col flex-grow">
                 <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-1 leading-snug cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition" onclick="openModal(${game.id})">${game.name}</h3>
+                
                 <div class="mt-auto flex justify-between items-end border-t border-dashed border-slate-200 dark:border-slate-700 pt-4">
                     <div><span class="block text-xs text-slate-400 dark:text-slate-500">Cena</span>${priceDisplay}</div>
-                    <button onclick="addToCart(${game.id}, event)" ${btnDisabled} class="${btnClass} w-10 h-10 rounded-xl flex items-center justify-center transition shadow-sm cursor-pointer z-20 relative"><i class="fa-solid fa-plus"></i></button>
+                    <button onclick="addToCart(${game.id}, event)" ${btnDisabled} class="${btnClass} w-10 h-10 rounded-xl flex items-center justify-center transition shadow-sm cursor-pointer z-20 relative">
+                        ${btnIcon}
+                    </button>
                 </div>
             </div>`;
         grid.appendChild(card);
@@ -335,7 +420,7 @@ function openModal(id) {
         } else {
             newBtn.disabled = false;
             newBtn.innerHTML = '<i class="fa-solid fa-cart-plus mr-2"></i> Dodaj u korpu';
-            newBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 shadow-lg shadow-indigo-200';
+            newBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 shadow-lg shadow-indigo-200 transition transform hover:scale-[1.02]';
             newBtn.onclick = (e) => addToCart(game.id, e); 
         }
     }
@@ -356,7 +441,11 @@ function closeModal() { if (modal) { modal.classList.add('hidden'); const iframe
 async function addToCart(gameId, event) {
     if (event) { event.stopPropagation(); event.preventDefault(); }
     try {
-        const response = await fetch('/api/cart/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: sessionId, game_id: gameId }) });
+        const response = await fetch('/api/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, game_id: gameId })
+        });
         const data = await response.json();
         if (data.success) { await refreshCartCount(); closeModal(); showNotification("Uspešno dodato u korpu!"); } 
         else { alert("Greška: " + (data.error || "Nepoznata greška")); }
@@ -421,6 +510,7 @@ async function removeItem(id) { await fetch(`/api/cart/remove/${id}`, { method: 
 async function updateQty(id, qty) { if(qty < 1) return; await fetch('/api/cart/update', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cart_item_id: id, quantity: qty }) }); loadCartPage(); refreshCartCount(); }
 function checkout() { window.location.href = 'checkout.html'; }
 
+// --- 11. CHECKOUT LOGIKA ---
 async function loadCheckoutSummary() {
     const container = document.getElementById('checkout-summary');
     const totalEl = document.getElementById('checkout-total');
@@ -453,10 +543,12 @@ function setupCheckoutForm() {
     });
 }
 
+// --- 12. PROFIL LOGIKA ---
 async function loadProfilePage() {
     const resAuth = await fetch('/api/check-auth');
     const authData = await resAuth.json();
     if (!authData.loggedIn) { window.location.href = 'login.html'; return; }
+
     try {
         const userRes = await fetch('/api/user/details');
         const user = await userRes.json();
@@ -466,21 +558,34 @@ async function loadProfilePage() {
         if (document.getElementById('p-zip')) document.getElementById('p-zip').value = user.zip || '';
         if (document.getElementById('p-phone')) document.getElementById('p-phone').value = user.phone || '';
     } catch(e) {}
+
     const wContainer = document.getElementById('wishlist-container');
     if (wContainer) {
         try {
             const res = await fetch('/api/user/wishlist');
             const items = await res.json();
             wContainer.innerHTML = '';
-            if (!Array.isArray(items) || items.length === 0) { wContainer.innerHTML = '<p class="text-sm text-slate-400">Nemate sačuvanih igara.</p>'; } 
-            else {
+            if (!Array.isArray(items) || items.length === 0) { 
+                wContainer.innerHTML = '<p class="text-sm text-slate-400">Nemate sačuvanih igara.</p>'; 
+            } else {
                 items.forEach(game => {
                     const img = getOptimizedImage(game.image_url, 100);
-                    wContainer.innerHTML += `<div class="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700 pb-3"><img src="${img}" class="w-12 h-12 object-contain bg-slate-50 dark:bg-slate-700 rounded"><div class="flex-grow"><h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${game.name}</h4><a href="shop.html" class="text-xs text-indigo-500 hover:underline">Pogledaj</a></div><button onclick="toggleWishlist(${game.id}, this); this.parentElement.remove()" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></div>`;
+                    wContainer.innerHTML += `
+                        <div class="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700 pb-3">
+                            <img src="${img}" class="w-12 h-12 object-contain bg-slate-50 dark:bg-slate-700 rounded">
+                            <div class="flex-grow">
+                                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${game.name}</h4>
+                                <a href="shop.html" class="text-xs text-indigo-500 hover:underline">Pogledaj</a>
+                            </div>
+                            <button onclick="toggleWishlist(${game.id}, this); this.parentElement.remove()" class="text-red-500 hover:text-red-700">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>`;
                 });
             }
         } catch(e) { wContainer.innerHTML = `<p class="text-red-500 text-sm">Greška.</p>`; }
     }
+
     const oContainer = document.getElementById('orders-container');
     try {
         const res = await fetch('/api/user/orders');
@@ -496,6 +601,7 @@ async function loadProfilePage() {
             });
         }
     } catch(e) {}
+
     const form = document.getElementById('profile-form');
     if(form) {
         const newForm = form.cloneNode(true);
@@ -510,6 +616,7 @@ async function loadProfilePage() {
     }
 }
 
+// --- 13. HOMEPAGE LOGIKA ---
 async function loadHomePageContent() {
     const popGrid = document.getElementById('popular-games-grid');
     if(popGrid) {
@@ -517,48 +624,125 @@ async function loadHomePageContent() {
             const res = await fetch('/api/popular-games');
             const popular = await res.json();
             popGrid.innerHTML = '';
-            if(popular.length === 0) { popGrid.innerHTML = '<p class="text-center col-span-full text-slate-500">Nema podataka.</p>'; return; }
-            popular.forEach(game => {
-                const imgUrl = getOptimizedImage(game.image_url, 400);
-                const price = game.discount_price ? game.discount_price : game.price;
-                const card = document.createElement('div');
-                card.className = 'bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-md border border-slate-100 dark:border-slate-700 hover:shadow-xl transition group cursor-pointer';
-                card.onclick = () => window.location.href = 'shop.html';
-                card.innerHTML = `<div class="h-40 flex items-center justify-center bg-slate-50 dark:bg-slate-700 rounded-xl mb-4 relative overflow-hidden"><img src="${imgUrl}" class="max-h-full max-w-full object-contain group-hover:scale-110 transition duration-500"><div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full"><i class="fa-solid fa-star"></i> ${game.rating}</div></div><h3 class="font-bold text-lg mb-1 truncate text-slate-800 dark:text-slate-200">${game.name}</h3><p class="text-indigo-600 dark:text-indigo-400 font-bold mb-3">${parseInt(price).toLocaleString()} RSD</p><a href="shop.html" class="block text-center bg-slate-100 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white text-slate-600 dark:text-slate-300 py-2 rounded-lg font-semibold transition text-sm">Pogledaj</a>`;
-                popGrid.appendChild(card);
-            });
-        } catch(e) {}
+            
+            if(popular.length === 0) {
+                popGrid.innerHTML = '<p class="text-center col-span-full text-slate-500">Nema podataka.</p>';
+            } else {
+                popular.forEach(game => {
+                    const imgUrl = getOptimizedImage(game.image_url, 400);
+                    const price = game.discount_price ? game.discount_price : game.price;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-md border border-slate-100 dark:border-slate-700 hover:shadow-xl transition group cursor-pointer';
+                    card.onclick = () => window.location.href = 'shop.html';
+                    
+                    card.innerHTML = `
+                        <div class="h-40 flex items-center justify-center bg-slate-50 dark:bg-slate-700 rounded-xl mb-4 relative overflow-hidden">
+                            <img src="${imgUrl}" class="max-h-full max-w-full object-contain group-hover:scale-110 transition duration-500">
+                            <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
+                                <i class="fa-solid fa-star"></i> ${game.rating}
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-lg mb-1 truncate text-slate-800 dark:text-slate-200">${game.name}</h3>
+                        <p class="text-indigo-600 dark:text-indigo-400 font-bold mb-3">${parseInt(price).toLocaleString()} RSD</p>
+                        <a href="shop.html" class="block text-center bg-slate-100 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white text-slate-600 dark:text-slate-300 py-2 rounded-lg font-semibold transition text-sm">Pogledaj</a>
+                    `;
+                    popGrid.appendChild(card);
+                });
+            }
+        } catch (e) { console.error("Popular error:", e); }
     }
+
     const blogContainer = document.getElementById('blog-container');
-    if(blogContainer) {
+    if (blogContainer) {
         try {
             const res = await fetch('/api/blogs');
             const blogs = await res.json();
             blogContainer.innerHTML = '';
-            blogs.forEach(blog => {
-                const img = getOptimizedImage(blog.image_url, 400);
-                blogContainer.innerHTML += `<div class="flex flex-col md:flex-row gap-6 items-start"><img src="${img}" class="w-full md:w-48 h-32 object-cover rounded-xl shadow-sm"><div><h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2 hover:text-indigo-600 cursor-pointer">${blog.title}</h3><p class="text-slate-600 dark:text-slate-400 text-sm mb-3">${blog.excerpt}</p><a href="#" class="text-indigo-600 dark:text-indigo-400 font-bold text-sm hover:underline">Pročitaj više -></a></div></div>`;
-            });
-        } catch(e) {}
+            
+            if (blogs.length === 0) {
+                blogContainer.innerHTML = '<p class="text-slate-500">Nema novosti.</p>';
+            } else {
+                blogs.forEach(blog => {
+                    const img = getOptimizedImage(blog.image_url, 400);
+                    const html = `
+                        <div class="flex flex-col md:flex-row gap-6 items-start border-b border-slate-100 dark:border-slate-700 pb-6 last:border-0 last:pb-0">
+                            <img src="${img}" class="w-full md:w-48 h-32 object-cover rounded-xl shadow-sm bg-slate-100 dark:bg-slate-700">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2 hover:text-indigo-600 cursor-pointer transition">${blog.title}</h3>
+                                <p class="text-slate-600 dark:text-slate-400 text-sm mb-3 line-clamp-3">${blog.excerpt}</p>
+                                <a href="#" class="text-indigo-600 dark:text-indigo-400 font-bold text-sm hover:underline flex items-center gap-1">Pročitaj više <i class="fa-solid fa-arrow-right text-xs"></i></a>
+                            </div>
+                        </div>`;
+                    blogContainer.innerHTML += html;
+                });
+            }
+        } catch (e) { console.error("Blog error:", e); }
     }
+
     const reviewContainer = document.getElementById('reviews-container');
-    if(reviewContainer) {
+    if (reviewContainer) {
         try {
             const res = await fetch('/api/reviews');
             const reviews = await res.json();
             reviewContainer.innerHTML = '';
-            reviews.forEach(rev => {
-                reviewContainer.innerHTML += `<div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-4"><div class="flex items-center gap-2 text-yellow-400 mb-3 text-sm">${'<i class="fa-solid fa-star"></i>'.repeat(rev.rating)}</div><p class="text-slate-600 dark:text-slate-400 italic mb-4">"${rev.content}"</p><p class="text-sm font-bold text-slate-800 dark:text-slate-200">- ${rev.user_name}</p></div>`;
-            });
-        } catch(e) {}
+            
+            if (reviews.length === 0) {
+                reviewContainer.innerHTML = '<p class="text-slate-500">Nema recenzija.</p>';
+            } else {
+                reviews.forEach(rev => {
+                    const html = `
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-4">
+                            <div class="flex items-center gap-2 text-yellow-400 mb-3 text-sm">
+                                ${'<i class="fa-solid fa-star"></i>'.repeat(rev.rating)}
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400 italic mb-4">"${rev.content}"</p>
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">${rev.user_name.charAt(0)}</div>
+                                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">${rev.user_name}</p>
+                            </div>
+                        </div>`;
+                    reviewContainer.innerHTML += html;
+                });
+            }
+        } catch (e) { console.error("Review error:", e); }
     }
 }
 
-// EVENT LISTENERS
+// --- 14. POPUP ---
+async function checkPromoPopup() {
+    const res = await fetch('/api/check-auth');
+    const data = await res.json();
+    if (data.loggedIn) return;
+    const popupShown = localStorage.getItem('promo_popup_shown');
+    if (!popupShown) {
+        setTimeout(() => {
+            const popup = document.getElementById('promo-popup');
+            const content = document.getElementById('promo-content');
+            if(popup) {
+                popup.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('scale-95'), 100);
+            }
+        }, 3000);
+    }
+}
+
+function closePromoPopup() { 
+    const popup = document.getElementById('promo-popup'); 
+    if(popup) popup.classList.add('hidden'); 
+    localStorage.setItem('promo_popup_shown', 'true'); 
+}
+
+// --- 15. EVENT LISTENERI ---
 if(searchInput) searchInput.addEventListener('input', filterProducts);
-if(priceSlider) priceSlider.addEventListener('input', (e) => { if(priceVal) priceVal.innerText = parseInt(e.target.value).toLocaleString(); filterProducts(); });
+if(priceSlider) priceSlider.addEventListener('input', (e) => { 
+    if(priceVal) priceVal.innerText = parseInt(e.target.value).toLocaleString(); 
+    filterProducts(); 
+});
 if(sortSelect) sortSelect.addEventListener('change', filterProducts);
 if(stockFilter) stockFilter.addEventListener('change', filterProducts);
+
 document.querySelectorAll('.filter-complexity, .filter-players').forEach(cb => cb.addEventListener('change', filterProducts));
 
+// POKRENI SVE
 init();

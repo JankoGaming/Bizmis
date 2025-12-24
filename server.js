@@ -8,25 +8,6 @@ const bcrypt = require('bcrypt');
 const db = require('./db');
 
 const app = express();
-// --- POMOĆNA FUNKCIJA ZA SLANJE MEJLOVA PREKO MIKROSERVISA ---
-async function sendEmailViaMicroservice(type, data) {
-    const MAILING_SERVICE_URL = 'http://localhost:3001'; // Adresa mikroservisa
-    const endpoint = type === 'admin' ? '/send' : '/send-user';
-    
-    try {
-        const response = await fetch(`${MAILING_SERVICE_URL}${endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        console.log(`[Email Service] Status: ${result.success ? 'Success' : 'Failed'} | Queued: ${result.queued}`);
-    } catch (error) {
-        console.error("[Email Service] Greška pri komunikaciji:", error.message);
-        // Ne prekidamo rad glavnog servera ako mejl servis ne radi!
-    }
-}
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -194,30 +175,6 @@ app.post('/api/checkout', async (req, res) => {
 
         await connection.query('DELETE FROM cart_items WHERE session_id = ?', [session_id]);
         await connection.commit();
-        // --- POZIV MIKROSERVISA (NOTIFIKACIJA ADMINU) ---
-        sendEmailViaMicroservice('admin', {
-         name: customer.fullName,
-         email: customer.email,
-         message: `Nova porudžbina #${orderId} u iznosu od ${total} RSD.\nAdresa: ${customer.address}, ${customer.city}\nTelefon: ${customer.phone}`
-         });
-
-    // --- POZIV MIKROSERVISA (POTVRDA KORISNIKU) ---
-        sendEmailViaMicroservice('user', {
-            to: customer.email,
-            subject: `Potvrda porudžbine #${orderId}`,
-            text: `Hvala na kupovini! Vaša porudžbina je primljena. Ukupno: ${total} RSD.`,
-            html: `
-                <h1>Hvala na kupovini!</h1>
-                <p>Poštovani/a <strong>${customer.fullName}</strong>,</p>
-                <p>Vaša porudžbina <strong>#${orderId}</strong> je uspešno primljena.</p>
-                <p>Ukupan iznos: <strong>${total} RSD</strong></p>
-                <p>Paket šaljemo na adresu: ${customer.address}, ${customer.city}.</p>
-                <br>
-                <p>Zmajeva Jazbina Tim</p>
-            `
-        });
-
-    res.json({ success: true, orderId: orderId, message: "Narudžbina uspešna!" });
         connection.release();
         
         res.json({ success: true, orderId: orderId, message: "Narudžbina uspešna!" });
@@ -239,26 +196,8 @@ app.post('/api/register', async (req, res) => {
         if (existing.length > 0) return res.status(400).json({ error: "Korisnik već postoji." });
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const promoCode = 'WELCOME' + Math.floor(1000 + Math.random() * 9000);
-
         await db.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword]);
-        
-        // --- POZIV MIKROSERVISA (DOBRODOŠLICA) ---
-        sendEmailViaMicroservice('user', {
-            to: email,
-            subject: "Dobrodošli u Zmajevu Jazbinu!",
-            text: `Zdravo ${username}, hvala na registraciji. Tvoj promo kod je: ${promoCode}`,
-            html: `
-                <h1>Dobrodošli u Zmajevu Jazbinu!</h1>
-                <p>Zdravo <strong>${username}</strong>,</p>
-                <p>Hvala što ste se registrovali. Kao znak pažnje, evo vašeg koda za 15% popusta:</p>
-                <h2 style="color: #4f46e5;">${promoCode}</h2>
-                <p>Srećno igranje!</p>
-            `
-        });
-        // ------------------------------------------
-
-        res.json({ success: true, message: "Uspešna registracija!", promoCode: promoCode });
+        res.json({ success: true, message: "Uspešna registracija!", promoCode: 'WELCOME15' });
     } catch (error) { res.status(500).json({ error: "Greška na serveru." }); }
 });
 

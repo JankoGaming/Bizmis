@@ -53,7 +53,15 @@
                             <span class="font-bold">Plaćanje pouzećem (keš kuriru)</span>
                         </label>
                     </div>
-
+                    <div id="loyalty-section" class="hidden bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-4">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="use-points" class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                        <div>
+                            <span class="font-bold text-slate-800">Iskoristi poene</span>
+                            <p class="text-xs text-slate-600">Imate <span id="user-points" class="font-bold text-indigo-600">0</span> poena (Popust: <span id="points-discount">0</span> RSD)</p>
+                        </div>
+                        </label>
+                    </div>
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg mt-6 transition transform hover:scale-[1.01]">
                         Potvrdi Narudžbinu
                     </button>

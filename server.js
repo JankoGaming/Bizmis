@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 console.log("--- POKREĆEM SERVER (ZMAJEVA JAZBINA) ---");
+=======
+console.log("--- POKREĆEM SERVER (BEZ MAILINGA + NAPREDNE FUNKCIJE) ---");
+>>>>>>> Stashed changes
 
 const express = require('express');
 const cors = require('cors');
@@ -13,40 +17,53 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(session({
     secret: 'super_tajna_sifra_zmajeva_jazbina',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 } 
+    cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-// --- MIDDLEWARE ZA ADMINA ---
+// --- MIDDLEWARE ---
 async function isAdmin(req, res, next) {
     if (!req.session.userId) return res.status(401).json({ error: "Niste ulogovani." });
-    if (req.session.role === 'admin') {
-        next();
-    } else {
+    if (req.session.role === 'admin') { next(); } 
+    else {
         const [rows] = await db.query('SELECT role FROM users WHERE id = ?', [req.session.userId]);
-        if (rows.length > 0 && rows[0].role === 'admin') {
-            req.session.role = 'admin';
-            next();
-        } else {
-            res.status(403).json({ error: "Pristup odbijen." });
-        }
+        if (rows.length > 0 && rows[0].role === 'admin') { req.session.role = 'admin'; next(); } 
+        else { res.status(403).json({ error: "Pristup odbijen." }); }
     }
 }
 
+<<<<<<< Updated upstream
 // ==============================================
 // 1. JAVNE RUTE (SHOP, HOMEPAGE)
 // ==============================================
+=======
+// --- GLAVNE RUTE ---
+>>>>>>> Stashed changes
 
+// 1. DOHVATI IGRE (SADA RAČUNA I PRODAJU ZA "BESTSELLER")
 app.get('/api/games', async (req, res) => {
     try {
+<<<<<<< Updated upstream
         const [rows] = await db.query('SELECT * FROM games ORDER BY rating DESC');
+=======
+        const query = `
+            SELECT g.*, COALESCE(SUM(oi.quantity), 0) as total_sold
+            FROM games g
+            LEFT JOIN order_items oi ON g.id = oi.game_id
+            GROUP BY g.id
+            ORDER BY g.rating DESC
+        `;
+        const [rows] = await db.query(query);
+>>>>>>> Stashed changes
         res.json(rows);
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+<<<<<<< Updated upstream
 // OVO JE FALILO ZA HOMEPAGE
 app.get('/api/popular-games', async (req, res) => {
     try {
@@ -296,6 +313,21 @@ app.put('/api/admin/orders/:id/status', isAdmin, async (req, res) => {
     catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+=======
+// 2. ADMIN: IZMENA IGRE (NOVO)
+app.put('/api/admin/games/:id', isAdmin, async (req, res) => {
+    const { name, price, discount_price, stock_quantity, type, description, image_url } = req.body;
+    try {
+        await db.query(
+            `UPDATE games SET name=?, price=?, discount_price=?, stock_quantity=?, type=?, description=?, image_url=? WHERE id=?`,
+            [name, price, discount_price || null, stock_quantity, type, description, image_url, req.params.id]
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 3. ADMIN: DODAVANJE IGRE
+>>>>>>> Stashed changes
 app.post('/api/admin/games', isAdmin, async (req, res) => {
     const { name, price, type, image_url, description, stock_quantity } = req.body;
     try { 
@@ -307,11 +339,13 @@ app.post('/api/admin/games', isAdmin, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 4. ADMIN: BRISANJE IGRE
 app.delete('/api/admin/games/:id', isAdmin, async (req, res) => {
     try { await db.query('DELETE FROM games WHERE id = ?', [req.params.id]); res.json({ success: true }); } 
     catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+<<<<<<< Updated upstream
 // ADMIN USERS
 app.get('/api/admin/users', isAdmin, async (req, res) => {
     try {
@@ -351,23 +385,103 @@ app.get('/api/user/orders', async (req, res) => {
 app.post('/api/wishlist/toggle', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: "Morate biti ulogovani." });
     const { game_id } = req.body;
+=======
+// --- OSTALE RUTE ---
+app.get('/api/popular-games', async (req, res) => {
+>>>>>>> Stashed changes
     try {
-        const [exists] = await db.query('SELECT * FROM wishlist WHERE user_id = ? AND game_id = ?', [req.session.userId, game_id]);
-        if (exists.length > 0) { await db.query('DELETE FROM wishlist WHERE user_id = ? AND game_id = ?', [req.session.userId, game_id]); res.json({ success: true, status: 'removed' }); }
-        else { await db.query('INSERT INTO wishlist (user_id, game_id) VALUES (?, ?)', [req.session.userId, game_id]); res.json({ success: true, status: 'added' }); }
+        const q = `SELECT game_id, COUNT(*) as count FROM cart_items WHERE created_at >= NOW() - INTERVAL 1 MONTH GROUP BY game_id ORDER BY count DESC LIMIT 4`;
+        const [popularIds] = await db.query(q);
+        if (popularIds.length === 0) { const [top] = await db.query('SELECT * FROM games ORDER BY rating DESC LIMIT 4'); return res.json(top); }
+        const ids = popularIds.map(p => p.game_id).join(',');
+        const [games] = await db.query(`SELECT * FROM games WHERE id IN (${ids})`);
+        res.json(games);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/wishlist/ids', async (req, res) => {
-    if (!req.session.userId) return res.json([]); 
-    try { const [rows] = await db.query('SELECT game_id FROM wishlist WHERE user_id = ?', [req.session.userId]); res.json(rows.map(r => r.game_id)); } catch (e) {}
+app.get('/api/blogs', async (req, res) => { try { const [r] = await db.query('SELECT * FROM blogs ORDER BY created_at DESC LIMIT 3'); res.json(r); } catch (e) {} });
+app.get('/api/reviews', async (req, res) => { try { const [r] = await db.query('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 3'); res.json(r); } catch (e) {} });
+
+// KORPA & CHECKOUT (BEZ MAILINGA)
+app.post('/api/cart/add', async (req, res) => {
+    const { session_id, game_id } = req.body;
+    try {
+        const [game] = await db.query('SELECT stock_quantity FROM games WHERE id = ?', [game_id]);
+        if (game.length === 0 || game[0].stock_quantity <= 0) return res.status(400).json({ error: "Nema na stanju." });
+        const [exists] = await db.query('SELECT * FROM cart_items WHERE session_id = ? AND game_id = ?', [session_id, game_id]);
+        if (exists.length > 0) {
+            if(exists[0].quantity >= game[0].stock_quantity) return res.status(400).json({ error: "Nema više na stanju." });
+            await db.query('UPDATE cart_items SET quantity = quantity + 1 WHERE session_id = ? AND game_id = ?', [session_id, game_id]);
+        } else { await db.query('INSERT INTO cart_items (session_id, game_id, quantity) VALUES (?, ?, 1)', [session_id, game_id]); }
+        res.json({ message: "Dodato", success: true });
+    } catch (e) { res.status(500).json({ error: "Greška" }); }
 });
 
-app.get('/api/user/wishlist', async (req, res) => {
-    if (!req.session.userId) return res.json([]);
-    try { const q = `SELECT g.* FROM wishlist w JOIN games g ON w.game_id = g.id WHERE w.user_id = ?`; const [rows] = await db.query(q, [req.session.userId]); res.json(rows); } catch (e) {}
+app.get('/api/cart/:session', async (req, res) => {
+    try { const q = `SELECT c.id as cart_item_id, c.quantity, g.* FROM cart_items c JOIN games g ON c.game_id = g.id WHERE c.session_id = ?`; const [r] = await db.query(q, [req.params.session]); res.json(r); } catch (e) {}
 });
+app.delete('/api/cart/remove/:id', async (req, res) => { try { await db.query('DELETE FROM cart_items WHERE id = ?', [req.params.id]); res.json({ success: true }); } catch (e) {} });
+app.put('/api/cart/update', async (req, res) => { try { await db.query('UPDATE cart_items SET quantity = ? WHERE id = ?', [req.body.quantity, req.body.cart_item_id]); res.json({ success: true }); } catch (e) {} });
+
+app.post('/api/checkout', async (req, res) => {
+    const { session_id, customer } = req.body;
+    const user_id = req.session.userId || null; 
+    const conn = await db.getConnection(); await conn.beginTransaction();
+    try {
+        const [cart] = await conn.query(`SELECT c.*, g.price, g.discount_price, g.stock_quantity FROM cart_items c JOIN games g ON c.game_id = g.id WHERE c.session_id = ?`, [session_id]);
+        if (cart.length === 0) { await conn.rollback(); return res.status(400).json({ error: "Prazna korpa" }); }
+        for (const item of cart) { if (item.quantity > item.stock_quantity) { await conn.rollback(); return res.status(400).json({ error: `Nema dovoljno na stanju za ID: ${item.game_id}` }); } }
+        let total = 0; cart.forEach(i => total += (i.discount_price||i.price) * i.quantity);
+        const [ord] = await conn.query(`INSERT INTO orders (user_id, full_name, address, city, phone, email, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)`, [user_id, customer.fullName, customer.address, customer.city, customer.phone, customer.email, total]);
+        for (const item of cart) {
+            await conn.query(`INSERT INTO order_items (order_id, game_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)`, [ord.insertId, item.game_id, item.quantity, (item.discount_price||item.price)]);
+            await conn.query(`UPDATE games SET stock_quantity = stock_quantity - ? WHERE id = ?`, [item.quantity, item.game_id]);
+        }
+        await conn.query('DELETE FROM cart_items WHERE session_id = ?', [session_id]);
+        await conn.commit(); conn.release(); res.json({ success: true });
+    } catch (e) { await conn.rollback(); conn.release(); res.status(500).json({ error: e.message }); }
+});
+
+// AUTH
+app.post('/api/register', async (req, res) => {
+    const { username, email, password } = req.body;
+    try {
+        const [ex] = await db.query('SELECT * FROM users WHERE email = ?', [email]); if (ex.length > 0) return res.status(400).json({ error: "Postoji" });
+        const h = await bcrypt.hash(password, 10); await db.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, h]); res.json({ success: true, promoCode: 'WELCOME15' });
+    } catch (e) {}
+});
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const [u] = await db.query('SELECT * FROM users WHERE email = ?', [email]); if (u.length === 0) return res.status(401).json({ error: "Greška" });
+        const m = await bcrypt.compare(password, u[0].password); if (!m) return res.status(401).json({ error: "Greška" });
+        req.session.userId = u[0].id; req.session.username = u[0].username; req.session.role = u[0].role;
+        res.json({ success: true, role: u[0].role, username: u[0].username });
+    } catch (e) {}
+});
+app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
+app.get('/api/check-auth', (req, res) => { if (req.session.userId) res.json({ loggedIn: true, username: req.session.username, role: req.session.role }); else res.json({ loggedIn: false }); });
+
+// ADMIN PREGLED
+app.get('/api/admin/stats', isAdmin, async (req, res) => {
+    try {
+        const [o] = await db.query('SELECT COUNT(*) as count, SUM(total_price) as revenue FROM orders');
+        const [u] = await db.query('SELECT COUNT(*) as count FROM users');
+        const [p] = await db.query('SELECT COUNT(*) as count FROM games');
+        const [ro] = await db.query('SELECT id, full_name, total_price, status FROM orders ORDER BY created_at DESC LIMIT 5');
+        res.json({ ordersCount: o[0].count, revenue: o[0].revenue||0, usersCount: u[0].count, productsCount: p[0].count, recentOrders: ro });
+    } catch (e) {}
+});
+app.get('/api/admin/orders', isAdmin, async (req, res) => { try { const q = `SELECT o.*, (SELECT GROUP_CONCAT(CONCAT(g.name, ' x', oi.quantity) SEPARATOR ', ') FROM order_items oi JOIN games g ON oi.game_id = g.id WHERE oi.order_id = o.id) as items FROM orders o ORDER BY o.created_at DESC`; const [r] = await db.query(q); res.json(r); } catch (e) {} });
+app.put('/api/admin/orders/:id/status', isAdmin, async (req, res) => { try { await db.query('UPDATE orders SET status = ? WHERE id = ?', [req.body.status, req.params.id]); res.json({ success: true }); } catch (e) {} });
+
+// PROFIL
+app.put('/api/user/update', async (req, res) => { if (!req.session.userId) return; try { await db.query(`UPDATE users SET full_name=?, address=?, city=?, zip=?, phone=? WHERE id=?`, [req.body.full_name, req.body.address, req.body.city, req.body.zip, req.body.phone, req.session.userId]); res.json({ success: true }); } catch (e) {} });
+app.get('/api/user/details', async (req, res) => { if (!req.session.userId) return; try { const [r] = await db.query('SELECT * FROM users WHERE id = ?', [req.session.userId]); res.json(r[0]); } catch (e) {} });
+app.get('/api/user/orders', async (req, res) => { if (!req.session.userId) return; try { const q = `SELECT o.id, o.total_price, o.status, o.created_at, (SELECT GROUP_CONCAT(CONCAT(g.name, ' (x', oi.quantity, ')') SEPARATOR ', ') FROM order_items oi JOIN games g ON oi.game_id = g.id WHERE oi.order_id = o.id) as items FROM orders o WHERE o.user_id = ? ORDER BY o.created_at DESC`; const [r] = await db.query(q, [req.session.userId]); res.json(r); } catch (e) {} });
+app.get('/api/user/wishlist', async (req, res) => { if (!req.session.userId) return; try { const q = `SELECT g.* FROM wishlist w JOIN games g ON w.game_id = g.id WHERE w.user_id = ?`; const [r] = await db.query(q, [req.session.userId]); res.json(r); } catch (e) {} });
+app.get('/api/wishlist/ids', async (req, res) => { if (!req.session.userId) return res.json([]); try { const [r] = await db.query('SELECT game_id FROM wishlist WHERE user_id = ?', [req.session.userId]); res.json(r.map(x => x.game_id)); } catch (e) {} });
+app.post('/api/wishlist/toggle', async (req, res) => { if (!req.session.userId) return; const { game_id } = req.body; try { const [ex] = await db.query('SELECT * FROM wishlist WHERE user_id = ? AND game_id = ?', [req.session.userId, game_id]); if (ex.length > 0) { await db.query('DELETE FROM wishlist WHERE user_id = ? AND game_id = ?', [req.session.userId, game_id]); res.json({ success: true, status: 'removed' }); } else { await db.query('INSERT INTO wishlist (user_id, game_id) VALUES (?, ?)', [req.session.userId, game_id]); res.json({ success: true, status: 'added' }); } } catch (e) {} });
 
 app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); });
-
-app.listen(PORT, () => { console.log(`✅ SERVER: http://localhost:${PORT}`); });
+app.listen(PORT, () => { console.log(`✅ SERVER RADI: http://localhost:${PORT}`); });

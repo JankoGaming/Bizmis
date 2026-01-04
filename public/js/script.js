@@ -13,7 +13,7 @@ let allProducts = [];
 let wishlistIds = [];
 let currentTab = 'all';
 let currentUserRole = 'user';
-let currentUserPoints = 0; // Novo: čuvamo poene korisnika
+let currentUserPoints = 0;
 
 // --- 2. DOM ELEMENTI ---
 const grid = document.getElementById('product-grid');
@@ -32,7 +32,6 @@ const stockFilter = document.getElementById('filter-stock');
 
 // --- 3. INIT FUNKCIJA (GLAVNI RUTER) ---
 async function init() {
-    // Tema
     setupTheme();
 
     // Paralelno učitavanje osnovnih podataka
@@ -54,7 +53,7 @@ async function init() {
     if (document.getElementById('checkout-form')) {
         loadCheckoutSummary();
         setupCheckoutForm();
-        checkLoyaltyPoints(); // Novo: Učitaj poene
+        checkLoyaltyPoints();
         return;
     }
 
@@ -73,14 +72,15 @@ async function init() {
             else switchTab(catParam);
         }
         await loadProducts();
-        renderRecentlyViewed(); // Novo: Prikaz istorije
+        renderRecentlyViewed();
     }
 
-    // E) HOMEPAGE
-    if (document.getElementById('popular-games-grid')) {
+    // E) HOMEPAGE (POČETNA)
+    // Proveravamo da li postoji kontejner koji smo dodali u index.html
+    if (document.getElementById('popular-games-container')) {
         loadHomePageContent();
         checkPromoPopup();
-        renderRecentlyViewed(); // Novo: Prikaz istorije
+        renderRecentlyViewed();
     }
 }
 
@@ -92,7 +92,6 @@ async function checkUserLogin() {
         
         currentUserRole = data.role || 'user';
         
-        // Ako je ulogovan, povuci dodatne detalje (poene)
         if (data.loggedIn) {
             try {
                 const detailsRes = await fetch('/api/user/details');
@@ -164,11 +163,9 @@ function filterProducts() {
     let filtered = allProducts.filter(item => {
         const finalPrice = item.discount_price || item.price;
         
-        // Tabovi
         if (currentTab === 'akcije') { if (!item.discount_price) return false; } 
         else if (currentTab !== 'all' && item.type !== currentTab) return false;
         
-        // Pretraga (Levenshtein + Contains)
         if (term) {
             const exact = item.name.toLowerCase().includes(term);
             const dist = levenshtein(term, item.name.toLowerCase());
@@ -179,7 +176,6 @@ function filterProducts() {
         if (finalPrice > maxPrice) return false;
         if (onlyInStock && (!item.stock_quantity || item.stock_quantity <= 0)) return false;
 
-        // Checkbox filteri
         if (checkedComplexity.length > 0 && (!item.complexity || !checkedComplexity.includes(item.complexity))) return false;
         if (checkedPlayers.length > 0) {
             let match = false;
@@ -191,7 +187,6 @@ function filterProducts() {
         return true;
     });
 
-    // Sortiranje
     if (sortSelect) {
         const sort = sortSelect.value;
         if (sort === 'availability') filtered.sort((a,b) => (b.stock_quantity||0) - (a.stock_quantity||0));
@@ -222,7 +217,6 @@ function renderProducts(list) {
         
         let stockHtml = '', btnClass = '', btnContent = '<i class="fa-solid fa-plus"></i>';
         let btnAction = `addToCart(${game.id}, event)`;
-        let cursorClass = 'cursor-pointer';
 
         if (currentUserRole === 'admin') {
             let color = isOutOfStock ? 'bg-red-600 border-red-400' : 'bg-blue-600 border-blue-400';
@@ -230,7 +224,7 @@ function renderProducts(list) {
         } else {
             if (isOutOfStock) {
                 stockHtml = `<div class="absolute inset-0 bg-white/60 dark:bg-black/60 z-10 flex items-center justify-center backdrop-blur-[2px]"><span class="bg-red-600 text-white font-bold px-4 py-2 rounded-xl shadow-lg transform -rotate-12 border-2 border-white text-sm">RASPRODATO</span></div>`;
-                btnContent = '<i class="fa-solid fa-bell"></i>'; // Zvonce za restock
+                btnContent = '<i class="fa-solid fa-bell"></i>';
                 btnClass = 'bg-slate-200 text-slate-500 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-400';
                 btnAction = `event.stopPropagation(); requestRestock(${game.id})`;
             } else {
@@ -299,23 +293,36 @@ function switchTab(tab) {
     filterProducts();
 }
 
-// --- 6. MODAL & NOVE FUNKCIONALNOSTI ---
+// --- 6. MODAL ---
 async function openModal(id) {
-    const game = allProducts.find(p => p.id === id); 
+    // Ako nemamo allProducts (npr. na homepage), dohvati ih privremeno ili jedan proizvod
+    // Za jednostavnost, ako smo na home, treba nam fetch single product ili fetch all
+    // Ovde pretpostavljamo da ako smo na shopu imamo allProducts. 
+    // Ako smo na Home, allProducts je prazan. Moramo ga napuniti ili naći igru.
+    
+    let game = null;
+    if (allProducts.length > 0) {
+        game = allProducts.find(p => p.id === id);
+    } else {
+        // Fallback fetch za Home Page modal
+        try {
+            const res = await fetch('/api/games'); 
+            const games = await res.json();
+            game = games.find(p => p.id === id);
+        } catch(e){}
+    }
+
     if (!game) return;
 
-    // 1. RECENTLY VIEWED (NOVO)
     addToRecentlyViewed(game);
 
     const isOutOfStock = (game.stock_quantity === undefined || game.stock_quantity <= 0);
 
-    // Popunjavanje podataka
     document.getElementById('modal-img').src = getOptimizedImage(game.image_url, 800);
     document.getElementById('modal-img').className = isOutOfStock ? "max-h-[50vh] object-contain drop-shadow-xl z-10 grayscale opacity-70" : "max-h-[50vh] object-contain drop-shadow-xl z-10";
     document.getElementById('modal-title').innerText = game.name;
     document.getElementById('modal-desc').innerText = game.description || 'Nema opisa.';
     
-    // Cena
     const priceEl = document.getElementById('modal-price');
     if (isOutOfStock) {
         priceEl.innerHTML = `<span class="text-2xl font-bold text-gray-400 line-through">RASPRODATO</span>`;
@@ -323,7 +330,6 @@ async function openModal(id) {
         priceEl.innerHTML = `<span class="text-sm line-through text-gray-400 mr-2">${game.price}</span><span class="text-red-600">${game.discount_price} RSD</span>`;
     } else { priceEl.innerText = game.price + ' RSD'; }
 
-    // Specifikacije
     const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val !== undefined ? val : '-'; };
     setText('modal-rating', game.rating);
     setText('modal-players', (game.players_min === game.players_max) ? game.players_min : `${game.players_min}-${game.players_max}`);
@@ -331,7 +337,6 @@ async function openModal(id) {
     setText('modal-age', game.age_min ? `${game.age_min}+` : '-');
     setText('modal-complexity', game.complexity);
 
-    // 2. LOGIKA DUGMETA (RESTOCK vs CART) (NOVO)
     const modalBtn = document.getElementById('modal-add-btn');
     if (modalBtn) { 
         const newBtn = modalBtn.cloneNode(true); 
@@ -349,7 +354,6 @@ async function openModal(id) {
         }
     }
     
-    // Video
     const vidContainer = document.getElementById('modal-video-container'); 
     const iframe = document.getElementById('modal-iframe');
     if (game.video_url && vidContainer && iframe) { 
@@ -358,52 +362,158 @@ async function openModal(id) {
         vidContainer.classList.add('hidden'); iframe.src = ""; 
     }
 
-    // 3. RELATED GAME / BUNDLE (NOVO)
-    const relatedContainer = document.getElementById('modal-related-container'); 
-    if (relatedContainer) {
-        if (game.related_game_id) {
-            const relatedGame = allProducts.find(p => p.id === game.related_game_id);
-            if (relatedGame && relatedGame.stock_quantity > 0) {
-                const rImg = getOptimizedImage(relatedGame.image_url, 80);
-                relatedContainer.innerHTML = `
-                    <div class="mt-4 p-4 bg-indigo-50 dark:bg-slate-700 rounded-xl border border-indigo-100 dark:border-slate-600">
-                        <p class="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase mb-3 flex items-center gap-2">
-                           <i class="fa-solid fa-thumbs-up"></i> Često se kupuje zajedno
-                        </p>
-                        <div class="flex items-center gap-3">
-                            <img src="${rImg}" class="w-12 h-12 rounded bg-white object-contain border">
-                            <div class="flex-grow">
-                                <h5 class="font-bold text-sm text-slate-800 dark:text-white">${relatedGame.name}</h5>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">${relatedGame.price} RSD</p>
-                            </div>
-                            <button onclick="addToCart(${relatedGame.id}); showNotification('Dodat paket proizvod!')" class="text-indigo-600 dark:text-indigo-400 font-bold text-xs bg-white dark:bg-slate-800 px-3 py-2 rounded-lg border border-indigo-200 dark:border-slate-600 hover:bg-indigo-600 hover:text-white transition shadow-sm">
-                                + Dodaj
-                            </button>
-                        </div>
-                    </div>
-                `;
-                relatedContainer.classList.remove('hidden');
-            } else {
-                relatedContainer.classList.add('hidden');
-            }
-        } else {
-            relatedContainer.classList.add('hidden');
-        }
-    }
-
     if(modal) modal.classList.remove('hidden');
 }
 
 function closeModal() { if (modal) { modal.classList.add('hidden'); const iframe = document.getElementById('modal-iframe'); if (iframe) iframe.src = ""; } }
 
-// --- 7. NOVE FUNKCIJE (RESTOCK & RECENTLY) ---
+// --- 7. NOVE FUNKCIJE (HOMEPAGE, RESTOCK, RECENTLY) ---
 
+// Učitavanje sadržaja za Home Page
+function loadHomePageContent() {
+    loadPopularGames();
+    loadReviews();
+    loadBlogs();
+}
+
+// Učitavanje Popularnih Igara
+async function loadPopularGames() {
+    const container = document.getElementById('popular-games-container');
+    if (!container) return;
+
+    try {
+        const res = await fetch('/api/popular-games');
+        const games = await res.json();
+
+        container.innerHTML = '';
+
+        if (games.length === 0) {
+            container.innerHTML = '<p class="text-center col-span-4 text-slate-500">Nema popularnih igara trenutno.</p>';
+            return;
+        }
+
+        games.forEach(game => {
+            const img = getOptimizedImage(game.image_url, 400);
+            const card = `
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1 border border-slate-100 dark:border-slate-700 flex flex-col h-full group relative">
+                    <div class="relative h-64 overflow-hidden bg-slate-50 dark:bg-slate-700 p-4 flex items-center justify-center cursor-pointer" onclick="openModal(${game.id})">
+                        <img src="${img}" class="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-110">
+                        <div class="absolute top-2 right-2 bg-yellow-400 text-slate-900 text-xs font-bold px-2 py-1 rounded-lg flex items-center shadow-sm">
+                            <i class="fa-solid fa-star mr-1"></i> ${game.rating}
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <h3 class="font-bold text-lg mb-1 text-slate-800 dark:text-white truncate cursor-pointer hover:text-indigo-600 transition" onclick="openModal(${game.id})">${game.name}</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-4 capitalize">${game.type}</p>
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-indigo-600 dark:text-indigo-400 font-extrabold text-xl">${game.price} RSD</span>
+                            <button onclick="addToCart(${game.id}, event)" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition">
+                                <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+
+    } catch (error) {
+        console.error("Greška pri učitavanju igara:", error);
+    }
+}
+
+// Učitavanje Recenzija
+async function loadReviews() {
+    const container = document.getElementById('reviews-container');
+    if (!container) return;
+
+    try {
+        const res = await fetch('/api/recent-reviews');
+        const reviews = await res.json();
+
+        container.innerHTML = '';
+
+        if (reviews.length === 0) {
+            container.innerHTML = '<p class="text-center col-span-3 text-slate-500">Nema recenzija još uvek.</p>';
+            return;
+        }
+
+        reviews.forEach(review => {
+            let starsHtml = '';
+            for(let i=0; i<5; i++) {
+                if(i < review.rating) starsHtml += '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>';
+                else starsHtml += '<i class="fa-regular fa-star text-slate-300 text-xs"></i>';
+            }
+
+            const card = `
+                <div class="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 relative hover:shadow-md transition">
+                    <i class="fa-solid fa-quote-right absolute top-6 right-6 text-slate-200 dark:text-slate-600 text-4xl"></i>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-300 font-bold">
+                            ${(review.user_name || 'A').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-800 dark:text-white">${review.user_name || 'Anonimni'}</h4>
+                            <div class="flex gap-0.5">${starsHtml}</div>
+                        </div>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 italic text-sm line-clamp-3">"${review.content}"</p>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+
+    } catch (error) { console.error(error); }
+}
+
+// Učitavanje Blogova
+async function loadBlogs() {
+    const container = document.getElementById('blog-container');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/blogs');
+        const blogs = await res.json();
+        container.innerHTML = '';
+        if(blogs.length === 0) { container.innerHTML = '<p class="text-slate-400">Nema novosti.</p>'; return; }
+        
+        blogs.forEach(blog => {
+            const date = new Date(blog.created_at).toLocaleDateString('sr-RS');
+            container.innerHTML += `
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row gap-6 hover:shadow-lg transition">
+                    <div class="w-full md:w-32 h-32 bg-slate-100 dark:bg-slate-700 rounded-lg flex-shrink-0 bg-cover bg-center" style="background-image: url('${blog.image_url || ''}')"></div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                            <i class="fa-regular fa-calendar"></i> ${date}
+                        </div>
+                        <h3 class="font-bold text-xl mb-2 text-slate-800 dark:text-white hover:text-indigo-600 transition cursor-pointer">${blog.title}</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">${blog.excerpt}</p>
+                        <a href="#" class="inline-block mt-3 text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline">Pročitaj više</a>
+                    </div>
+                </div>`;
+        });
+    } catch(e) {}
+}
+
+// Promo Popup logika
+function checkPromoPopup() {
+    setTimeout(() => {
+        const popup = document.getElementById('promo-popup');
+        if(popup && !localStorage.getItem('promo_shown')) {
+            popup.classList.remove('hidden');
+            localStorage.setItem('promo_shown', 'true');
+        }
+    }, 3000);
+}
+function closePromoPopup() {
+    const popup = document.getElementById('promo-popup');
+    if(popup) popup.classList.add('hidden');
+}
+window.closePromoPopup = closePromoPopup; // Globalni pristup za HTML
+
+// Restock
 async function requestRestock(gameId) {
     let email = null;
-    // Pokušaj da nađeš email ako je ulogovan
-    if (currentUserRole !== 'admin') {
-         // Ovde bi mogao da izvučeš iz forme profila ako postoji, ili jednostavno tražiš prompt
-    }
+    if (currentUserRole !== 'admin') { /* Pokušaj auto-fill emaila ako želiš */ }
     email = prompt("Unesite vaš email za obaveštenje kada igra stigne:");
     
     if (!email) return;
@@ -420,6 +530,7 @@ async function requestRestock(gameId) {
     } catch(e) { alert("Greška na serveru."); }
 }
 
+// Recently Viewed
 function addToRecentlyViewed(game) {
     let viewed = JSON.parse(localStorage.getItem('recently_viewed')) || [];
     viewed = viewed.filter(v => v.id !== game.id);
@@ -431,7 +542,7 @@ function addToRecentlyViewed(game) {
 
 function renderRecentlyViewed() {
     const container = document.getElementById('recently-viewed-container');
-    if (!container) return; // Nije na stranici gde ovo treba prikazati
+    if (!container) return; 
 
     const viewed = JSON.parse(localStorage.getItem('recently_viewed')) || [];
     if (viewed.length === 0) { container.classList.add('hidden'); return; }
@@ -489,34 +600,21 @@ async function toggleWishlist(gameId, btn) {
 }
 
 // --- 9. KORPA ---
-// --- U fajlu script.js zameni staru addToCart funkciju ovim: ---
-
 async function addToCart(gameId, event) {
     if (event) { event.stopPropagation(); event.preventDefault(); }
 
-    // 1. PROVERA ZA GOSTE (NOVO)
-    // Proveravamo da li je korisnik ulogovan (koristimo globalnu promenljivu currentUserRole)
+    // Provera za goste
     if (currentUserRole !== 'user' && currentUserRole !== 'admin') {
-        // Provera da li smo mu već nudili popust u ovoj sesiji da ga ne smaramo
         const promoShown = sessionStorage.getItem('promo_offered');
-        
         if (!promoShown) {
-            // Prikaži popup
             const popup = document.getElementById('promo-popup');
-            const content = document.getElementById('promo-content');
             if(popup) {
                 popup.classList.remove('hidden');
-                setTimeout(() => content.classList.remove('scale-95'), 100);
-                sessionStorage.setItem('promo_offered', 'true'); // Zapamti da smo prikazali
+                sessionStorage.setItem('promo_offered', 'true');
             }
-            // Možemo prekinuti dodavanje u korpu ako želimo da ga forsiramo, 
-            // ali bolji UX je da ga pustimo da doda, pa da mu ponudimo registraciju.
-            // Ako želiš da ga BLOKIRAŠ dok se ne registruje, otkomentariši liniju ispod:
-            // return; 
         }
     }
 
-    // 2. STANDARDNA LOGIKA DODAVANJA
     try {
         const response = await fetch('/api/cart/add', {
             method: 'POST',
@@ -532,6 +630,7 @@ async function addToCart(gameId, event) {
         else { alert("Greška: " + (data.error || "Nepoznata greška")); }
     } catch (error) { console.error("Greška:", error); }
 }
+
 async function refreshCartCount() {
     if (!cartCount) return;
     try {
@@ -606,9 +705,8 @@ async function loadCheckoutSummary() {
             container.innerHTML += `<div class="flex justify-between text-sm border-b border-slate-100 dark:border-slate-700 pb-2 last:border-0"><span class="text-slate-600 dark:text-slate-400">${item.quantity}x ${item.name}</span><span class="font-bold dark:text-white">${(price * item.quantity).toLocaleString()}</span></div>`;
         });
         
-        // Podesi osnovni total
         if(totalEl) totalEl.innerText = total.toLocaleString() + " RSD";
-        if(totalEl) totalEl.dataset.originalTotal = total; // Čuvamo originalnu vrednost za JS kalkulaciju
+        if(totalEl) totalEl.dataset.originalTotal = total; 
     } catch (e) { console.error(e); }
 }
 
@@ -625,7 +723,6 @@ async function checkLoyaltyPoints() {
             document.getElementById('user-points').innerText = user.points;
             document.getElementById('points-discount').innerText = user.points; 
             
-            // Listener za checkbox - Vizuelna promena cene
             const checkbox = document.getElementById('use-points');
             checkbox.addEventListener('change', function() {
                 const totalEl = document.getElementById('checkout-total');
@@ -674,17 +771,11 @@ async function loadProfilePage() {
     try {
         const userRes = await fetch('/api/user/details');
         const user = await userRes.json();
-        // Popuni polja
         ['p-fullname', 'p-address', 'p-city', 'p-zip', 'p-phone'].forEach(id => {
             if(document.getElementById(id)) document.getElementById(id).value = user[id.replace('p-', '').replace('fullname', 'full_name')] || '';
         });
-        
-        // Prikaz Poena na profilu (ako postoji element za to, opciono)
-        // console.log("User points:", user.points);
-        
     } catch(e) {}
 
-    // Wishlist
     const wContainer = document.getElementById('wishlist-container');
     if (wContainer) {
         try {
@@ -712,7 +803,6 @@ async function loadProfilePage() {
         } catch(e) { wContainer.innerHTML = `<p class="text-red-500 text-sm">Greška.</p>`; }
     }
 
-    // Orders
     const oContainer = document.getElementById('orders-container');
     if (oContainer) {
         try {
@@ -731,7 +821,6 @@ async function loadProfilePage() {
         } catch(e) {}
     }
 
-    // Form Update
     const form = document.getElementById('profile-form');
     if(form) {
         const newForm = form.cloneNode(true);

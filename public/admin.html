@@ -28,16 +28,19 @@
         </div>
         <nav class="flex-grow p-4 space-y-2 overflow-y-auto">
             <button onclick="showSection('dashboard')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
-                <i class="fa-solid fa-chart-line"></i> Pregled
+                <i class="fa-solid fa-chart-line w-6"></i> Pregled
             </button>
             <button onclick="showSection('orders')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
-                <i class="fa-solid fa-box"></i> Narudžbine
+                <i class="fa-solid fa-box w-6"></i> Narudžbine
             </button>
             <button onclick="showSection('games')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
-                <i class="fa-solid fa-dice"></i> Proizvodi
+                <i class="fa-solid fa-dice w-6"></i> Proizvodi
+            </button>
+            <button onclick="showSection('blogs')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-newspaper w-6"></i> Blogovi (Novosti)
             </button>
             <button onclick="showSection('users')" class="w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
-                <i class="fa-solid fa-users"></i> Korisnici
+                <i class="fa-solid fa-users w-6"></i> Korisnici
             </button>
         </nav>
         <div class="p-4 border-t border-slate-700">
@@ -51,20 +54,20 @@
             <h2 class="text-3xl font-bold text-gray-800">Pregled Poslovanja</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
+                    <p class="text-gray-500 text-sm">Ukupno Narudžbina</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-orders">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
                     <p class="text-gray-500 text-sm">Ukupno Zarada</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-revenue">0 RSD</h3>
+                    <h3 class="text-2xl font-bold text-green-600" id="stat-revenue">0 RSD</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                    <p class="text-gray-500 text-sm">Registrovanih Korisnika</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-users">0</h3>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
                     <p class="text-gray-500 text-sm">Vrednost Robe</p>
                     <h3 class="text-2xl font-bold text-gray-800" id="stat-inventory">0 RSD</h3>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                    <p class="text-gray-500 text-sm">Korisnika</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-users">0</h3>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
-                    <p class="text-gray-500 text-sm">Proizvoda</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-products">0</h3>
                 </div>
             </div>
 
@@ -122,26 +125,33 @@
         <section id="games" class="hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-3xl font-bold text-gray-800">Proizvodi</h2>
-                <button onclick="openEditModal(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                <button onclick="openGameModal(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
                     + Dodaj Igru
                 </button>
             </div>
             <div id="admin-games-list" class="grid grid-cols-1 gap-4"></div>
         </section>
 
+        <section id="blogs" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-3xl font-bold text-gray-800">Blogovi (Novosti)</h2>
+                <button onclick="openBlogModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    + Dodaj Novost
+                </button>
+            </div>
+            <div id="blogs-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </section>
+
     </main>
 
-    <div id="game-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 overflow-y-auto py-10">
-        <div class="bg-white p-8 rounded-xl w-full max-w-lg shadow-2xl relative">
+    <div id="game-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 overflow-y-auto py-10 backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeModal('game-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                 <i class="fa-solid fa-times text-xl"></i>
             </button>
-            <h3 class="text-xl font-bold mb-4 text-slate-800" id="modal-title">Nova Igra</h3>
-            
-            <form id="game-form" class="space-y-4">
-                <input type="hidden" id="edit-id">
-                
-                <div class="grid grid-cols-1 gap-3">
+            <h3 class="text-xl font-bold mb-4 text-slate-800" id="game-modal-title">Nova Igra</h3> <form id="game-form" class="space-y-4">
+                <input type="hidden" id="g-id"> <div class="grid grid-cols-1 gap-3">
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Naziv Igre</label><input type="text" id="g-name" class="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none" required></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -153,12 +163,17 @@
                     </div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Zaliha (kom)</label><input type="number" id="g-stock" class="w-full border p-2 rounded" required></div>
                 </div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Redovna Cena</label><input type="number" id="g-price" class="w-full border p-2 rounded" required></div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Redovna Cena</label><input type="number" id="g-price" class="w-full border p-2 rounded" required></div>
+                    <div><label class="block text-xs font-bold text-red-500 uppercase mb-1">Akcijska Cena</label><input type="number" id="g-discount" class="w-full border border-red-200 bg-red-50 p-2 rounded" placeholder="Prazno = Nema"></div>
+                </div>
+
                 <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Slika URL</label><input type="text" id="g-image" class="w-full border p-2 rounded" required></div>
                 <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Opis</label><textarea id="g-desc" class="w-full border p-2 rounded h-20 text-sm"></textarea></div>
                 
                 <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
-                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700 shadow">Sačuvaj</button>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700 shadow w-full">Sačuvaj</button>
                 </div>
             </form>
         </div>
@@ -180,8 +195,25 @@
         </div>
     </div>
 
+    <div id="blog-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-xl w-full max-w-lg shadow-2xl relative">
+            <button onclick="closeModal('blog-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold mb-4 text-slate-800">Dodaj Novost</h3>
+            <form id="blog-form" class="space-y-4">
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Naslov</label><input type="text" id="b-title" class="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500" required></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kratak tekst</label><textarea id="b-excerpt" class="w-full border p-2 rounded h-24" required></textarea></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Slika URL</label><input type="text" id="b-image" class="w-full border p-2 rounded"></div>
+                <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700 shadow w-full">Objavi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // --- ROUTER ---
+        // GLOBALNE PROMENLJIVE
+        let allGames = []; // Čuvamo igre lokalno za lakše editovanje
+
         document.addEventListener('DOMContentLoaded', loadDashboard);
 
         function showSection(id) {
@@ -190,101 +222,73 @@
             if(id === 'dashboard') loadDashboard();
             if(id === 'orders') loadAllOrders();
             if(id === 'games') loadAdminGames();
-            if(id === 'users') loadUsers(); // NOVO
+            if(id === 'users') loadUsers();
+            if(id === 'blogs') loadAdminBlogs(); // NOVO
         }
 
         // --- DASHBOARD & LOW STOCK ---
         async function loadDashboard() {
-            try {
-                const res = await fetch('/api/admin/stats');
-                const data = await res.json();
-                
-                document.getElementById('stat-revenue').innerText = parseInt(data.revenue).toLocaleString() + ' RSD';
-                document.getElementById('stat-inventory').innerText = parseInt(data.inventoryValue || 0).toLocaleString() + ' RSD';
-                document.getElementById('stat-orders').innerText = data.ordersCount;
-                document.getElementById('stat-users').innerText = data.usersCount;
-                document.getElementById('stat-products').innerText = data.productsCount;
-
-                // POPUNJAVANJE LISTE KRITIČNIH ZALIHA (MANJE OD 5)
-                const lowStockList = document.getElementById('low-stock-list');
-                lowStockList.innerHTML = ''; // Čistimo listu da ne bi bilo dupliranja
-                
-                if (data.lowStock && data.lowStock.length > 0) {
-                    data.lowStock.forEach(item => {
-                        let color = item.stock_quantity === 0 ? 'text-red-600 font-bold' : 'text-orange-500';
-                        lowStockList.innerHTML += `
-                            <li class="flex justify-between items-center border-b pb-2 last:border-0">
-                                <span class="font-medium text-slate-700 truncate w-2/3">${item.name}</span>
-                                <span class="${color}">${item.stock_quantity} kom</span>
-                            </li>
-                        `;
-                    });
-                } else {
-                    lowStockList.innerHTML = '<li class="text-green-600 flex items-center gap-2"><i class="fa-solid fa-check"></i> Zalihe su dobre.</li>';
-                }
-
-                // Recent Orders
-                const table = document.getElementById('recent-orders-table');
-                table.innerHTML = '';
-                data.recentOrders.forEach(o => {
-                    table.innerHTML += `<tr class="border-b last:border-0 hover:bg-gray-50"><td class="p-2 text-sm">${o.full_name}</td><td class="p-2 font-bold text-sm">${o.total_price}</td><td class="p-2 text-xs uppercase">${o.status}</td></tr>`;
-                });
-            } catch(e) { console.error(e); }
-        }// --- U admin.html zameniti funkciju loadDashboard ovim kodom ---
-
-async function loadDashboard() {
     try {
         const res = await fetch('/api/admin/stats');
         const data = await res.json();
         
-        // Popunjavanje kartica (Sklonili smo stat-orders jer nemamo tu karticu u HTML-u)
-        document.getElementById('stat-revenue').innerText = parseInt(data.revenue).toLocaleString() + ' RSD';
-        document.getElementById('stat-inventory').innerText = parseInt(data.inventoryValue || 0).toLocaleString() + ' RSD';
-        // document.getElementById('stat-orders').innerText = data.ordersCount; // <--- OVO JE IZAZIVALO GREŠKU
-        document.getElementById('stat-users').innerText = data.usersCount;
-        document.getElementById('stat-products').innerText = data.productsCount;
+        // Pomoćna funkcija za bezbedno upisivanje teksta
+        const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        };
 
-        // POPUNJAVANJE LISTE KRITIČNIH ZALIHA (MANJE OD 5)
+        // Popunjavanje kartica
+        setText('stat-revenue', parseInt(data.revenue).toLocaleString() + ' RSD');
+        setText('stat-inventory', parseInt(data.inventoryValue || 0).toLocaleString() + ' RSD');
+        setText('stat-orders', data.ordersCount);
+        setText('stat-users', data.usersCount);
+        setText('stat-products', data.productsCount);
+
+        // --- POPRAVLJENO: KRITIČNE ZALIHE ---
         const lowStockList = document.getElementById('low-stock-list');
-        lowStockList.innerHTML = ''; 
-        
-        if (data.lowStock && data.lowStock.length > 0) {
-            data.lowStock.forEach(item => {
-                // Ako je 0, boja je crvena, inače narandžasta
-                let color = item.stock_quantity === 0 ? 'text-red-600 font-bold' : 'text-orange-500 font-bold';
-                
-                lowStockList.innerHTML += `
-                    <li class="flex justify-between items-center border-b border-slate-100 pb-2 last:border-0 hover:bg-slate-50 p-1 rounded transition">
-                        <span class="font-medium text-slate-700 truncate w-2/3" title="${item.name}">${item.name}</span>
-                        <span class="${color}">${item.stock_quantity} kom</span>
-                    </li>
-                `;
-            });
-        } else {
-            lowStockList.innerHTML = '<li class="text-green-600 flex items-center gap-2 font-medium"><i class="fa-solid fa-check-circle"></i> Zalihe su dobre.</li>';
+        if (lowStockList) {
+            lowStockList.innerHTML = ''; 
+            
+            if (data.lowStock && data.lowStock.length > 0) {
+                data.lowStock.forEach(item => {
+                    // Crveno ako je 0, narandžasto ako je manje od 5
+                    let colorClass = item.stock_quantity === 0 ? 'text-red-600 font-bold' : 'text-orange-500 font-bold';
+                    
+                    lowStockList.innerHTML += `
+                        <li class="flex justify-between items-center border-b border-slate-100 pb-2 last:border-0 hover:bg-slate-50 p-1 rounded transition">
+                            <span class="font-medium text-slate-700 truncate w-2/3" title="${item.name}">${item.name}</span>
+                            <span class="${colorClass}">${item.stock_quantity} kom</span>
+                        </li>
+                    `;
+                });
+            } else {
+                lowStockList.innerHTML = '<li class="text-green-600 flex items-center gap-2 font-medium"><i class="fa-solid fa-check-circle"></i> Zalihe su dobre.</li>';
+            }
         }
 
         // Recent Orders
         const table = document.getElementById('recent-orders-table');
-        table.innerHTML = '';
-        if (data.recentOrders && data.recentOrders.length > 0) {
-            data.recentOrders.forEach(o => {
-                // Status boje
-                let statusColor = 'text-yellow-600 bg-yellow-100';
-                if(o.status === 'poslata') statusColor = 'text-blue-600 bg-blue-100';
-                if(o.status === 'isporučena') statusColor = 'text-green-600 bg-green-100';
+        if (table) {
+            table.innerHTML = '';
+            if (data.recentOrders && data.recentOrders.length > 0) {
+                data.recentOrders.forEach(o => {
+                    let statusColor = 'text-yellow-600 bg-yellow-100';
+                    if(o.status === 'poslata') statusColor = 'text-blue-600 bg-blue-100';
+                    if(o.status === 'isporučena') statusColor = 'text-green-600 bg-green-100';
 
-                table.innerHTML += `
-                <tr class="border-b last:border-0 hover:bg-slate-50 transition">
-                    <td class="p-3 text-sm font-medium text-slate-700">${o.full_name}</td>
-                    <td class="p-3 font-bold text-sm text-indigo-600">${o.total_price.toLocaleString()}</td>
-                    <td class="p-3">
-                        <span class="px-2 py-1 rounded-full text-[10px] uppercase font-bold ${statusColor}">${o.status}</span>
-                    </td>
-                </tr>`;
-            });
-        } else {
-            table.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-400">Nema skorijih narudžbina.</td></tr>';
+                    table.innerHTML += `
+                    <tr class="border-b last:border-0 hover:bg-slate-50 transition">
+                        <td class="p-3 text-sm font-medium text-slate-700">${o.full_name}</td>
+                        <td class="p-3 font-bold text-sm text-indigo-600">${o.total_price.toLocaleString()}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-[10px] uppercase font-bold ${statusColor}">${o.status}</span>
+                        </td>
+                    </tr>`;
+                });
+            } else {
+                table.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-400">Nema skorijih narudžbina.</td></tr>';
+            }
         }
 
     } catch(e) { 
@@ -292,28 +296,20 @@ async function loadDashboard() {
     }
 }
 
-        // --- ORDERS (FIXED DUPLICATES) ---
+        // --- ORDERS ---
         async function loadAllOrders() {
             const table = document.getElementById('all-orders-table');
-            // KLJUČNO: Očisti tabelu pre punjenja!
             table.innerHTML = '<tr class="text-center"><td colspan="6" class="p-4">Učitavanje...</td></tr>';
-            
             try {
                 const res = await fetch('/api/admin/orders'); 
                 const orders = await res.json();
-                
-                table.innerHTML = ''; // Očisti loader
-                
+                table.innerHTML = '';
                 orders.forEach(o => {
                     let statusClass = o.status==='poslata'?'bg-blue-100 text-blue-700':(o.status==='isporučena'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700');
-                    
                     table.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b last:border-0">
                         <td class="p-4 font-bold">#${o.id}</td>
-                        <td class="p-4">
-                            <div class="font-bold">${o.full_name}</div>
-                            <div class="text-xs text-gray-500">${o.email}</div>
-                        </td>
+                        <td class="p-4"><div class="font-bold">${o.full_name}</div><div class="text-xs text-gray-500">${o.email}</div></td>
                         <td class="p-4 text-sm text-gray-600 max-w-xs truncate" title="${o.items}">${o.items || 'Nema stavki'}</td>
                         <td class="p-4 font-bold text-indigo-600">${o.total_price} RSD</td>
                         <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${statusClass}">${o.status}</span></td>
@@ -330,28 +326,20 @@ async function loadDashboard() {
         }
 
         async function updateStatus(id, status) { 
-            await fetch(`/api/admin/orders/${id}/status`, { 
-                method: 'PUT', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ status }) 
-            }); 
-            // Osveži tabelu da se boje promene
+            await fetch(`/api/admin/orders/${id}/status`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) }); 
             loadAllOrders();
         }
 
-        // --- USERS (NOVO) ---
+        // --- USERS ---
         async function loadUsers() {
             const table = document.getElementById('all-users-table');
             table.innerHTML = '<tr class="text-center"><td colspan="6" class="p-4">Učitavanje...</td></tr>';
-
             try {
                 const res = await fetch('/api/admin/users');
                 const users = await res.json();
                 table.innerHTML = '';
-
                 users.forEach(u => {
                     const roleBadge = u.role === 'admin' ? '<span class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold">ADMIN</span>' : '<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">USER</span>';
-                    
                     table.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b last:border-0">
                         <td class="p-4 text-gray-500">#${u.id}</td>
@@ -379,52 +367,69 @@ async function loadDashboard() {
         async function saveUserPoints() {
             const id = document.getElementById('points-user-id').value;
             const points = document.getElementById('new-points-val').value;
-            
-            await fetch(`/api/admin/users/${id}/points`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ points })
-            });
-            
+            await fetch(`/api/admin/users/${id}/points`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ points }) });
             closeModal('points-modal');
             loadUsers();
         }
 
-        // --- GAMES ---
+        // --- GAMES (EDIT & DISCOUNTS) ---
         async function loadAdminGames() {
             const list = document.getElementById('admin-games-list');
             list.innerHTML = 'Učitavanje...';
-            const res = await fetch('/api/games');
-            const games = await res.json();
-            list.innerHTML = '';
             
-            games.forEach(g => {
-                let stockClass = g.stock_quantity === 0 ? 'bg-red-100 text-red-700' : (g.stock_quantity < 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700');
+            try {
+                const res = await fetch('/api/admin/games');
+                allGames = await res.json(); // Čuvamo za edit
+                list.innerHTML = '';
                 
-                list.innerHTML += `
-                    <div class="flex flex-col md:flex-row items-center justify-between border p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition gap-4">
-                        <div class="flex items-center gap-4 w-full md:w-auto">
-                            <img src="${g.image_url}" class="w-16 h-16 object-contain bg-slate-50 rounded-lg p-1 border">
-                            <div>
-                                <div class="font-bold text-lg text-slate-800">${g.name}</div>
-                                <div class="text-sm text-gray-500 font-mono mb-1">${g.price} RSD</div>
-                                <span class="text-xs font-bold px-2 py-1 rounded border ${stockClass}">
-                                    ${g.stock_quantity} kom
-                                </span>
+                allGames.forEach(g => {
+                    let stockClass = g.stock_quantity === 0 ? 'bg-red-100 text-red-700' : (g.stock_quantity < 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700');
+                    // Prikaz popusta
+                    let priceDisplay = g.discount_price ? `<span class="line-through text-gray-400 text-xs">${g.price}</span> <span class="text-red-600 font-bold">${g.discount_price} RSD</span>` : `<span class="text-gray-500 font-mono">${g.price} RSD</span>`;
+
+                    list.innerHTML += `
+                        <div class="flex flex-col md:flex-row items-center justify-between border p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition gap-4">
+                            <div class="flex items-center gap-4 w-full md:w-auto">
+                                <img src="${g.image_url}" class="w-16 h-16 object-contain bg-slate-50 rounded-lg p-1 border">
+                                <div>
+                                    <div class="font-bold text-lg text-slate-800">${g.name}</div>
+                                    <div class="mb-1">${priceDisplay}</div>
+                                    <span class="text-xs font-bold px-2 py-1 rounded border ${stockClass}">${g.stock_quantity} kom</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex gap-2 w-full md:w-auto justify-end">
-                            <button onclick='deleteGame(${g.id})' class="text-red-500 border border-red-200 px-3 py-2 rounded font-bold text-xs hover:bg-red-50"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>`;
-            });
+                            <div class="flex gap-2 w-full md:w-auto justify-end">
+                                <button onclick='openGameModal(${g.id})' class="text-indigo-600 bg-indigo-50 border border-indigo-200 px-3 py-2 rounded font-bold text-xs hover:bg-indigo-100"><i class="fa-solid fa-pen"></i> Izmeni</button>
+                                <button onclick='deleteGame(${g.id})' class="text-red-500 bg-red-50 border border-red-200 px-3 py-2 rounded font-bold text-xs hover:bg-red-100"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>`;
+                });
+            } catch(e) { console.error(e); }
         }
         
         async function deleteGame(id) { if(confirm("Sigurno?")) { await fetch(`/api/admin/games/${id}`, { method: 'DELETE' }); loadAdminGames(); } }
         
-        function openEditModal(game) {
-            // (Skraćena verzija za dodavanje, logika je ista kao pre)
+        // NOVO: AŽURIRANA FUNKCIJA ZA MODAL (PODRŽAVA EDIT)
+        function openGameModal(gameId = null) {
             document.getElementById('game-modal').classList.remove('hidden');
+            
+            if (gameId) {
+                // EDIT MODE
+                const game = allGames.find(g => g.id === gameId);
+                document.getElementById('game-modal-title').innerText = "Izmeni Igru / Dodaj Popust";
+                document.getElementById('g-id').value = game.id;
+                document.getElementById('g-name').value = game.name;
+                document.getElementById('g-price').value = game.price;
+                document.getElementById('g-stock').value = game.stock_quantity;
+                document.getElementById('g-type').value = game.type;
+                document.getElementById('g-image').value = game.image_url;
+                document.getElementById('g-desc').value = game.description;
+                document.getElementById('g-discount').value = game.discount_price || ''; // Popust
+            } else {
+                // ADD MODE
+                document.getElementById('game-modal-title').innerText = "Nova Igra";
+                document.getElementById('game-form').reset();
+                document.getElementById('g-id').value = ''; 
+            }
         }
 
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -432,17 +437,67 @@ async function loadDashboard() {
         // Forma za igru
         document.getElementById('game-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const id = document.getElementById('g-id').value; // Uzimamo ID ako postoji
+            
             const data = { 
                 name: document.getElementById('g-name').value, 
                 price: document.getElementById('g-price').value, 
+                discount_price: document.getElementById('g-discount').value, // NOVO
                 stock_quantity: document.getElementById('g-stock').value, 
                 type: document.getElementById('g-type').value, 
                 image_url: document.getElementById('g-image').value, 
                 description: document.getElementById('g-desc').value 
             };
-            await fetch('/api/admin/games', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+
+            // Ako ima ID, radi PUT (Update), ako nema radi POST (Create)
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/admin/games/${id}` : '/api/admin/games';
+
+            await fetch(url, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
             closeModal('game-modal'); loadAdminGames();
         });
+
+        // --- BLOGS LOGIKA (NOVO) ---
+        async function loadAdminBlogs() {
+            const list = document.getElementById('blogs-list');
+            list.innerHTML = '<p class="text-slate-500">Učitavanje...</p>';
+            try {
+                const res = await fetch('/api/blogs');
+                const blogs = await res.json();
+                list.innerHTML = '';
+                if(blogs.length === 0) list.innerHTML = '<p>Nema novosti.</p>';
+                
+                blogs.forEach(b => {
+                    list.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full">
+                            <div class="h-32 bg-slate-100 rounded-lg mb-4 bg-cover bg-center" style="background-image: url('${b.image_url}')"></div>
+                            <h3 class="font-bold text-lg mb-2 text-slate-800 line-clamp-1">${b.title}</h3>
+                            <p class="text-sm text-slate-500 flex-grow mb-4 line-clamp-3">${b.excerpt}</p>
+                            <button onclick="deleteBlog(${b.id})" class="w-full bg-red-50 text-red-600 py-2 rounded hover:bg-red-100 transition font-bold text-sm border border-red-100"><i class="fa-solid fa-trash mr-1"></i> Obriši</button>
+                        </div>`;
+                });
+            } catch(e) {}
+        }
+
+        function openBlogModal() { document.getElementById('blog-modal').classList.remove('hidden'); }
+        
+        document.getElementById('blog-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('b-title').value,
+                excerpt: document.getElementById('b-excerpt').value,
+                image_url: document.getElementById('b-image').value
+            };
+            await fetch('/api/admin/blogs', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            closeModal('blog-modal'); document.getElementById('blog-form').reset(); loadAdminBlogs();
+        });
+
+        async function deleteBlog(id) {
+            if(confirm("Obriši ovu vest?")) {
+                await fetch(`/api/admin/blogs/${id}`, { method: 'DELETE' });
+                loadAdminBlogs();
+            }
+        }
 
     </script>
 </body>

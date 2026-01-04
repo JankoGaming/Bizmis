@@ -22,7 +22,6 @@
 </head>
 <body class="text-slate-800 bg-slate-50 flex flex-col min-h-screen">
 
-    <!-- NAVIGACIJA -->
     <nav class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-slate-100">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -42,14 +41,15 @@
                     <i class="fa-solid fa-cart-shopping text-xl"></i>
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">0</span>
                 </a>
+                <a href="login.html" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full font-bold text-sm transition">
+                    Prijava
+                </a>
             </div>
         </div>
     </nav>
 
-    <!-- SLIDESHOW HERO -->
     <header class="slider-container" id="hero-slider">
-        <!-- Slide 1 -->
-        <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1610890716171-6b1c9f2c723c?q=80&w=1920');">
+        <div class="slide active" style="background-image: url('pictures/gloomhaven.jpeg');">
             <div class="slide-overlay flex items-center justify-center text-center text-white">
                 <div class="container px-4">
                     <span class="inline-block py-1 px-3 rounded-full bg-indigo-500/30 border border-indigo-400/50 backdrop-blur-sm text-indigo-100 text-xs font-bold tracking-widest uppercase mb-4">Dobrodošli</span>
@@ -58,8 +58,7 @@
                 </div>
             </div>
         </div>
-        <!-- Slide 2 -->
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=1920');">
+        <div class="slide" style="background-image: url('pictures/terraformingmars.jpeg');">
             <div class="slide-overlay flex items-center justify-center text-center text-white">
                 <div class="container px-4">
                     <span class="inline-block py-1 px-3 rounded-full bg-red-500/30 border border-red-400/50 backdrop-blur-sm text-red-100 text-xs font-bold tracking-widest uppercase mb-4">Velika Akcija</span>
@@ -70,23 +69,19 @@
         </div>
     </header>
 
-    <!-- CONTENT WRAPPER -->
     <div class="flex-grow">
         
-        <!-- NAJPOPULARNIJE IGRE (DYNAMIC) -->
         <section class="py-20 container mx-auto px-4">
             <h2 class="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-fire text-red-500"></i> Najpopularnije ovog meseca
             </h2>
             <p class="text-slate-500 mb-10">Ovo su igre koje svi kupuju trenutno.</p>
             
-            <div id="popular-games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- JS ubacuje igre ovde -->
-                <div class="col-span-full text-center py-10"><div class="loader mx-auto"></div></div>
+            <div id="popular-games-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="col-span-full text-center py-10"><p class="text-slate-400">Učitavanje popularnih igara...</p></div>
             </div>
         </section>
 
-        <!-- KATEGORIJE -->
         <section class="bg-indigo-900 py-20 text-white">
             <div class="container mx-auto px-4 text-center">
                 <h2 class="text-3xl font-bold mb-12">Istraži po kategorijama</h2>
@@ -107,19 +102,22 @@
             </div>
         </section>
 
-        <!-- BLOGOVI I RECENZIJE -->
         <section id="blog" class="py-20 container mx-auto px-4">
             <div class="flex flex-col lg:flex-row gap-12">
                 
-                <!-- Blogovi -->
                 <div class="lg:w-2/3">
                     <h2 class="text-3xl font-bold text-slate-900 mb-8">Novosti iz sveta igara</h2>
                     <div id="blog-container" class="space-y-8">
-                        <p class="text-slate-400">Učitavanje blogova...</p>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex gap-4">
+                            <div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0"></div>
+                            <div>
+                                <h3 class="font-bold text-lg mb-2">Turnir u Catanu sledeće nedelje!</h3>
+                                <p class="text-sm text-slate-500 line-clamp-2">Pridružite nam se u velikom okršaju za titulu vladara ostrva. Prijave su otvorene do petka...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Recenzije -->
                 <div class="lg:w-1/3">
                     <h2 class="text-3xl font-bold text-slate-900 mb-8">Šta kažu igrači?</h2>
                     <div id="reviews-container" class="space-y-6">
@@ -130,11 +128,10 @@
         </section>
     </div>
 
-    <!-- POPUP ZA REGISTRACIJU -->
     <div id="promo-popup" class="fixed inset-0 z-[100] hidden flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closePromoPopup()"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden transform scale-95 transition-transform duration-300" id="promo-content">
-            <button onclick="closePromoPopup()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="document.getElementById('promo-popup').classList.add('hidden')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden transform scale-95 transition-transform duration-300">
+            <button onclick="document.getElementById('promo-popup').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800"><i class="fa-solid fa-xmark text-2xl"></i></button>
             
             <div class="bg-indigo-600 p-8 text-center text-white">
                 <i class="fa-solid fa-gift text-5xl mb-4 animate-bounce"></i>
@@ -147,12 +144,11 @@
                 <a href="register.html" class="block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg mb-3">
                     Preuzmi Popust
                 </a>
-                <button onclick="closePromoPopup()" class="text-slate-400 hover:text-slate-600 text-sm">Ne, hvala, plaćam punu cenu.</button>
+                <button onclick="document.getElementById('promo-popup').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-sm">Ne, hvala, plaćam punu cenu.</button>
             </div>
         </div>
     </div>
 
-    <!-- FOOTER -->
     <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
         <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
             <div>
@@ -193,7 +189,7 @@
     
     <script src="js/script.js"></script>
     <script>
-        // Slideshow Logika (Samo za homepage)
+        // Slideshow Logika
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');
         
@@ -204,6 +200,15 @@
             slides[currentSlide].classList.add('active');
         }
         if(slides.length > 0) setInterval(nextSlide, 5000); 
+
+        // Promo popup trigger (pojavljuje se posle 3 sekunde)
+        setTimeout(() => {
+            const popup = document.getElementById('promo-popup');
+            if(popup && !localStorage.getItem('promo_shown')) {
+                popup.classList.remove('hidden');
+                localStorage.setItem('promo_shown', 'true');
+            }
+        }, 3000);
     </script>
 
 </body>

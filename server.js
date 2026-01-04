@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 console.log("--- POKREĆEM SERVER (ZMAJEVA JAZBINA) ---");
-=======
-console.log("--- POKREĆEM SERVER (BEZ MAILINGA + NAPREDNE FUNKCIJE) ---");
->>>>>>> Stashed changes
 
 const express = require('express');
 const cors = require('cors');
@@ -36,34 +32,18 @@ async function isAdmin(req, res, next) {
     }
 }
 
-<<<<<<< Updated upstream
 // ==============================================
 // 1. JAVNE RUTE (SHOP, HOMEPAGE)
 // ==============================================
-=======
-// --- GLAVNE RUTE ---
->>>>>>> Stashed changes
 
 // 1. DOHVATI IGRE (SADA RAČUNA I PRODAJU ZA "BESTSELLER")
 app.get('/api/games', async (req, res) => {
     try {
-<<<<<<< Updated upstream
         const [rows] = await db.query('SELECT * FROM games ORDER BY rating DESC');
-=======
-        const query = `
-            SELECT g.*, COALESCE(SUM(oi.quantity), 0) as total_sold
-            FROM games g
-            LEFT JOIN order_items oi ON g.id = oi.game_id
-            GROUP BY g.id
-            ORDER BY g.rating DESC
-        `;
-        const [rows] = await db.query(query);
->>>>>>> Stashed changes
         res.json(rows);
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-<<<<<<< Updated upstream
 // OVO JE FALILO ZA HOMEPAGE
 app.get('/api/popular-games', async (req, res) => {
     try {
@@ -313,21 +293,6 @@ app.put('/api/admin/orders/:id/status', isAdmin, async (req, res) => {
     catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-=======
-// 2. ADMIN: IZMENA IGRE (NOVO)
-app.put('/api/admin/games/:id', isAdmin, async (req, res) => {
-    const { name, price, discount_price, stock_quantity, type, description, image_url } = req.body;
-    try {
-        await db.query(
-            `UPDATE games SET name=?, price=?, discount_price=?, stock_quantity=?, type=?, description=?, image_url=? WHERE id=?`,
-            [name, price, discount_price || null, stock_quantity, type, description, image_url, req.params.id]
-        );
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 3. ADMIN: DODAVANJE IGRE
->>>>>>> Stashed changes
 app.post('/api/admin/games', isAdmin, async (req, res) => {
     const { name, price, type, image_url, description, stock_quantity } = req.body;
     try { 
@@ -345,7 +310,6 @@ app.delete('/api/admin/games/:id', isAdmin, async (req, res) => {
     catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-<<<<<<< Updated upstream
 // ADMIN USERS
 app.get('/api/admin/users', isAdmin, async (req, res) => {
     try {
@@ -385,10 +349,6 @@ app.get('/api/user/orders', async (req, res) => {
 app.post('/api/wishlist/toggle', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: "Morate biti ulogovani." });
     const { game_id } = req.body;
-=======
-// --- OSTALE RUTE ---
-app.get('/api/popular-games', async (req, res) => {
->>>>>>> Stashed changes
     try {
         const q = `SELECT game_id, COUNT(*) as count FROM cart_items WHERE created_at >= NOW() - INTERVAL 1 MONTH GROUP BY game_id ORDER BY count DESC LIMIT 4`;
         const [popularIds] = await db.query(q);

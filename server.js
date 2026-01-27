@@ -1,11 +1,13 @@
 console.log("--- POKREĆEM SERVER (ZMAJEVA JAZBINA) ---");
 
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./db');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +22,55 @@ app.use(session({
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
+// --- 1. ZAMENI KONFIGURACIJU TRANSPORTERA OVIM ---
+// Ne treba nam pravi transporter, samo pravimo objekat da kod ne puca
+const transporter = {
+    sendMail: async (options) => {
+        // Umesto slanja, samo ispisujemo u konzolu šta bi bilo poslato
+        console.log("---------------------------------------------------");
+        console.log("⚠️ SIMULACIJA EMAILA (Nije stvarno poslato) ⚠️");
+        console.log("ZA:", options.to);
+        console.log("NASLOV:", options.subject);
+        console.log("SADRŽAJ:", options.text || "HTML Sadržaj");
+        console.log("---------------------------------------------------");
+        return Promise.resolve(true); // Vraćamo uspeh
+    }
+};
+
+// --- 2. FUNKCIJA OSTAJE ISTA ILI SLIČNA ---
+// (Ova funkcija sada koristi lažni transporter iznad, pa neće tražiti lozinku)
+async function sendOwnerNotification(orderId, customer, total, items) {
+    const mailOptions = {
+        from: "fake@zmajevajazbina.rs", // Bilo šta
+        to: "admin@zmajevajazbina.rs",  // Bilo šta
+        subject: `Nova narudžbina #${orderId} - ${customer.fullName}`,
+        html: `Narudžbina od ${customer.fullName}, Ukupno: ${total}`
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ (Simulacija) Notifikacija za narudžbinu #${orderId} uspešna.`);
+    } catch (error) {
+        console.error("Greška u simulaciji:", error);
+    }
+}
+
+// --- 3. PROMENI RUTE DA NE KORISTE ENV VARIJABLE ---
+
+// Ruta za kontakt formu
+app.post('/api/send', async (req, res) => {
+    const { name, email, message } = req.body;
+    // Samo simuliramo slanje
+    console.log(`📩 Kontakt forma - Od: ${name} (${email}), Poruka: ${message}`);
+    res.json({ success: true, message: "Email (simulirano) poslat!" });
+});
+
+// Ruta za slanje korisniku
+app.post('/api/send-user', async (req, res) => {
+    const { to, subject, text } = req.body;
+    console.log(`📨 Slanje korisniku (${to}): ${subject}`);
+    res.json({ success: true, message: "Email (simulirano) poslat." });
+});
 
 // --- MIDDLEWARE ZA ADMINA ---
 async function isAdmin(req, res, next) {
@@ -188,32 +239,99 @@ app.post('/api/cart/add', async (req, res) => { /* ... */
 app.get('/api/cart/:session_id', async (req, res) => { try { const q = `SELECT c.id as cart_item_id, c.quantity, g.* FROM cart_items c JOIN games g ON c.game_id = g.id WHERE c.session_id = ?`; const [rows] = await db.query(q, [req.params.session_id]); res.json(rows); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.delete('/api/cart/remove/:id', async (req, res) => { try { await db.query('DELETE FROM cart_items WHERE id = ?', [req.params.id]); res.json({ success: true }); } catch (e) {} });
 app.put('/api/cart/update', async (req, res) => { try { await db.query('UPDATE cart_items SET quantity = ? WHERE id = ?', [req.body.quantity, req.body.cart_item_id]); res.json({ success: true }); } catch (e) {} });
-app.post('/api/checkout', async (req, res) => { 
-    const { session_id, customer, usePoints } = req.body; const user_id = req.session.userId || null; const connection = await db.getConnection(); await connection.beginTransaction();
+app.post('/api/checkout', async (req, res) => {
+    const { session_id, customer, usePoints } = req.body;
+    const user_id = req.session.userId || null;
+    
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
+
     try {
-        const [cartItems] = await connection.query(`SELECT c.*, g.price, g.discount_price, g.stock_quantity FROM cart_items c JOIN games g ON c.game_id = g.id WHERE c.session_id = ?`, [session_id]);
-        if (cartItems.length === 0) { await connection.rollback(); connection.release(); return res.status(400).json({ error: "Prazna korpa" }); }
+        // 1. Dohvati stavke iz korpe
+        const [cartItems] = await connection.query(
+            `SELECT c.*, g.name, g.price, g.discount_price, g.stock_quantity 
+             FROM cart_items c 
+             JOIN games g ON c.game_id = g.id 
+             WHERE c.session_id = ?`, 
+            [session_id]
+        );
+
+        if (cartItems.length === 0) {
+            await connection.rollback();
+            connection.release();
+            return res.status(400).json({ error: "Prazna korpa" });
+        }
+
+        // 2. Provera stanja i računanje totala
         let total = 0;
         for (const item of cartItems) {
-            if (item.quantity > item.stock_quantity) { await connection.rollback(); connection.release(); return res.status(400).json({ error: `Nema zaliha za ID: ${item.game_id}` }); }
+            if (item.quantity > item.stock_quantity) {
+                await connection.rollback();
+                connection.release();
+                return res.status(400).json({ error: `Nema dovoljno zaliha za igru: ${item.name}` });
+            }
             total += (item.discount_price || item.price) * item.quantity;
         }
+
+        // 3. Loyalty poeni (trošenje)
         if (user_id && usePoints) {
             const [u] = await connection.query('SELECT points FROM users WHERE id = ?', [user_id]);
             const discount = Math.min(u[0].points, total);
             total -= discount;
             await connection.query('UPDATE users SET points = points - ? WHERE id = ?', [discount, user_id]);
         }
-        const [ord] = await connection.query(`INSERT INTO orders (user_id, full_name, address, city, phone, email, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)`, [user_id, customer.fullName, customer.address, customer.city, customer.phone, customer.email, total]);
+
+        // 4. Kreiranje narudžbine
+        const [ord] = await connection.query(
+            `INSERT INTO orders (user_id, full_name, address, city, phone, email, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, customer.fullName, customer.address, customer.city, customer.phone, customer.email, total]
+        );
+
+        // 5. Ubacivanje stavki i skidanje zaliha
         for (const item of cartItems) {
-            await connection.query(`INSERT INTO order_items (order_id, game_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)`, [ord.insertId, item.game_id, item.quantity, (item.discount_price||item.price)]);
-            await connection.query(`UPDATE games SET stock_quantity = stock_quantity - ? WHERE id = ?`, [item.quantity, item.game_id]);
+            await connection.query(
+                `INSERT INTO order_items (order_id, game_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)`,
+                [ord.insertId, item.game_id, item.quantity, (item.discount_price || item.price)]
+            );
+            await connection.query(
+                `UPDATE games SET stock_quantity = stock_quantity - ? WHERE id = ?`,
+                [item.quantity, item.game_id]
+            );
         }
+
+        // 6. Loyalty poeni (zarada)
         const pointsEarned = user_id ? Math.floor(total / 100) : 0;
-        if (pointsEarned > 0) await connection.query('UPDATE users SET points = points + ? WHERE id = ?', [pointsEarned, user_id]);
+        if (pointsEarned > 0) {
+            await connection.query('UPDATE users SET points = points + ? WHERE id = ?', [pointsEarned, user_id]);
+        }
+
+        // 7. Brisanje korpe
         await connection.query('DELETE FROM cart_items WHERE session_id = ?', [session_id]);
-        await connection.commit(); connection.release(); res.json({ success: true, earnedPoints: pointsEarned });
-    } catch (e) { await connection.rollback(); connection.release(); res.status(500).json({ error: "Greška" }); }
+
+        // POTVRDA TRANSAKCIJE
+        await connection.commit();
+        connection.release();
+
+        // --- NOVO: SLANJE EMAILA ---
+        // Pripremamo lepši niz za email funkciju
+        const emailItems = cartItems.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.discount_price || item.price
+        }));
+
+        // Pozivamo funkciju (bez await da korisnik ne čeka slanje emaila)
+        sendOwnerNotification(ord.insertId, customer, total, emailItems);
+        // ---------------------------
+
+        res.json({ success: true, earnedPoints: pointsEarned });
+
+    } catch (e) {
+        await connection.rollback();
+        connection.release();
+        console.error(e);
+        res.status(500).json({ error: "Greška na serveru" });
+    }
 });
 app.post('/api/restock-request', async (req, res) => { try { await db.query('INSERT INTO restock_requests (user_id, email, game_id) VALUES (?, ?, ?)', [req.session.userId || null, req.body.email, req.body.game_id]); res.json({ success: true }); } catch (e) {} });
 app.post('/api/register', async (req, res) => { try { const h = await bcrypt.hash(req.body.password, 10); await db.query('INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, "user")', [req.body.username, req.body.email, h]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: "Greška" }); } });
